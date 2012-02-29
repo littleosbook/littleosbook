@@ -79,6 +79,19 @@ is located at `0x43`. To read about all the configuration options, see
 
 This results in the configuration byte `00110110`.
 
+Setting the interval for how often interrupts are to be raised is done via a
+_divider_. Instead of sending the PIT a value (e.g. in milliseconds) that says
+how often an interrupt should be raised, you send a _divider_. The PIT operates
+at 1193182 Hz as default. To change this, you send a divider, for example 10.
+The PIT will then run at `1193182 / 10 = 1193182` Hz. The divider can only be
+16 bits, so it only possible to configure the timers frequency between 1193182
+Hz and `1193182 / 65535 = 18.2` Hz. We recommend that you create a function
+that takes an interval in milliseconds and converts it to the correct divider.
+
+The divider is then sent to channel 0 data I/O port of the PIT, but since you
+can only send 1 byte at a time, you must first send the lowest 8 bits, then the
+highest 8 bits of the divider. The channel 0 data I/O port is at `0x40`.
+
 ### Separate kernel stacks for processes
 When the yield system calls is used, a privilege level change will occur, since
 the processes runs in user mode and the process switching will run in kernel
