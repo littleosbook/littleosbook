@@ -35,8 +35,6 @@ helpful members, and James Malloy for his eminent kernel development tutorial
 [@malloy]. We'd also like to thank our supervisor Torbjörn Granlund for his
 insightful questions and our interesting discussions.
 
-TODO: perhaps "number munchers".
-
 Most of the CSS formatting of the book is based on the work by Scott Chacon for
 the book Pro Git, <http://progit.org/>.
 
