@@ -24,5 +24,9 @@ book.pdf: $(CHAPTERS) $(TEX_HEADER) $(BIB) $(CITATION)
 ff: book.html
 	firefox book.html
 
+release: book.html
+	cp book.html ../littleosbook.github.com/index.html
+	cp book.css ../littleosbook.github.com/
+
 clean:
 	rm -f book.pdf book.html
