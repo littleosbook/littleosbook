@@ -141,14 +141,14 @@ kernels code and data. The kernel pages will of course require privilege level
 ### The Virtual Address for the Kernel
 
 Preferably, the kernel should be placed at a very high virtual memory address,
-for example `0xC000000` (3GB). The user mode process is not likely to
+for example `0xC0000000` (3 GB). The user mode process is not likely to
 be 3GB large, which is now the only way that it can conflict with the
 kernel.
 
 If the user mode process is larger than 3GB, some pages will need to be
 swapped out by the kernel. Swapping pages will not be part of this book.
 
-### Placing the Kernel at `0xC010000`
+### Placing the Kernel at `0xC0100000`
 
 Placing the kernel at `0xC0100000` isn't hard, but it does require some
 thought. This is once again a linking problem.  When the linker resolves all
@@ -164,10 +164,10 @@ However, we can't simply tell the linker to assume that the kernel starts (is
 loaded) at `0xC01000000`, since we want it to be loaded at the physical address
 `0x00100000`. The reason for having the kernel loaded at 1 MB is because it
 can't be loaded at `0x00000000`, since there is BIOS and GRUB code loaded below
-1 MB. We also cannot assume that we can load the kernel at `0xC010000`, since
+1 MB. We also cannot assume that we can load the kernel at `0xC0100000`, since
 the machine might not have 3 GB of physical memory.
 
-This can be solved by using both relocation (`.=0xC01000000`) and the `AT`
+This can be solved by using both relocation (`.=0xC0100000`) and the `AT`
 instruction in the linker script. Relocation specifies that non-relative
 memory-references should should use the relocation address as base in address
 calculations. `AT` specifies where the kernel should be loaded into memory.
