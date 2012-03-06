@@ -195,7 +195,7 @@ generated on systems using both GRUB Legacy and GRUB 2. We need the GRUB Legacy
 the source from <ftp://alpha.gnu.org/gnu/grub/grub-0.97.tar.gz>. However, the
 source code `configure` script doesn't work well with Ubuntu [@ubuntu-grub], so
 the binary files can be downloaded from
-<files/stage2_eltorito>. Locate the file `stage2_eltorito`
+[here](files/stage2_eltorito). Locate the file `stage2_eltorito`
 and copy it to your current folder.
 
 ### Building an ISO Image
