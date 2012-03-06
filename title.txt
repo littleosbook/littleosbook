@@ -1,3 +1,3 @@
 % The little book about OS development
 % Erik Helin, Adam Renberg
-% 0eda8fa88d9d5bafde5820772e08865d8b98ed70
+% b921493843afa6acdf63cbf438a44e003b36db61
