@@ -1,20 +1,20 @@
-# System calls
+# System Calls
 
-## What is a system call?
+## What is a System Call?
 
 System calls (syscalls) is the way for user-mode applications to interact with
 the kernel - to ask for resources, request operations to be performed, etc. The
 syscall API is the part of the kernel most exposed to the users, so its design
 requires some thought.
 
-## Designing system calls
+## Designing System Calls
 
 It is up to us, the kernel developers, to design the system calls that
 applications developer can use. We can draw inspiration from the POSIX
 standards or, if they seem a bit too much, just look at the ones for Linux, and
 pick and choose. See [further reading](#further-reading-7) below.
 
-## Implementing system calls
+## Implementing System Calls
 
 Syscalls are traditionally implemented with software interrupts. The user
 applications puts the appropriate values in registers or on the stack and then
@@ -54,7 +54,7 @@ interrupts. We enter user mode by using the `iret` instruction, and this loads
 the `eflags` register from the stack for us. Setting the IF flag bit in the
 `eflags` on the stack will make `iret` enable interrupts for us.
 
-## Further reading
+## Further Reading
 
 - The Wikipedia page on POSIX, with links to the specifications:
   <http://en.wikipedia.org/wiki/POSIX>

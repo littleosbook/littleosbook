@@ -34,9 +34,12 @@ $for(author)$
 <h2 class="author">$author$</h2>
 $endfor$
 </div>
+<div class="subheader">
 $if(date)$
-<span class="date">Commit: $date$</span>
+Commit: $date$
 $endif$
+<a class="pdflink" href="book.pdf" title="PDF version">PDF version</a>
+</div>
 <div id='content'>
 $for(include-before)$
 $include-before$

@@ -111,14 +111,20 @@ img.right {
   line-height: 140%;
 }
 
-span.date {
+.subheader {
   background: #484;
   display: block;
   padding: 0.4em 0.6em 0.3em;
   font-weight: bold;
   color: white;
   border-bottom: 3px solid #262;
-  float: left;
+  position: relative;
+}
+
+.subheader .pdflink {
+    text-align: right;
+    display: block;
+    float: right;
 }
 
 div.post {

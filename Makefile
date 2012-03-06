@@ -24,7 +24,12 @@ book.pdf: $(CHAPTERS) $(TEX_HEADER) $(BIB) $(CITATION)
 ff: book.html
 	firefox book.html
 
-release: book.html
+release: book.html book.pdf
+	mkdir -p ../littleosbook.github.com/images
+	cp images/*.png ../littleosbook.github.com/images/
+	mkdir -p ../littleosbook.github.com/files
+	cp files/* ../littleosbook.github.com/files/
+	cp book.pdf ../littleosbook.github.com/
 	cp book.html ../littleosbook.github.com/index.html
 	cp book.css ../littleosbook.github.com/
 

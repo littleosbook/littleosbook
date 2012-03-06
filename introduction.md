@@ -1,12 +1,13 @@
 # Introduction
 
-## What is this book about?
+## What Is This Book About?
 
 This book is not about the theory behind operating systems, or how any specific
-OS works. For the first we recommend Modern Operating Systems by Andrew
-Tanenbaum [@ostanenbaum]. For the second the internet is your friend.
+operating system (OS) works. For the first we recommend Modern Operating
+Systems by Andrew Tanenbaum [@ostanenbaum]. For the second the internet is your
+friend.
 
-This book is a practical guide to writing your own operating system. It is
+This book is a practical guide to writing your own x86 operating system. It is
 designed to not give too much away with samples and code excerpts, but still
 give enough help with the technical details. We've tried to collect parts of
 the vast (and often excellent) expanse of material and tutorials out there, on
@@ -20,15 +21,15 @@ should now be more familiar with the world of kernel development. At the
 end of some chapters there are links for further reading, which might be
 interesting and give a deeper understanding of the topics covered.
 
-## The reader
+## The Reader
 
 The reader of this book should be comfortable with UNIX/Linux, systems
 programming and the C language in general. This book is of course also a great
 way to get started learning those things, but it will be tougher going,
-especially where we implicitly make use of them. Google and other tutorials are
-often helpful.
+especially where we implicitly make use of them. Search engines and other
+tutorials are often helpful.
 
-## Credits, thanks and acknowledgements
+## Credits, Thanks and Acknowledgements
 
 We'd like to thank the OSDev community [@osdev] for their great wiki and
 helpful members, and James Malloy for his eminent kernel development tutorial
@@ -38,7 +39,7 @@ insightful questions and our interesting discussions.
 Most of the CSS formatting of the book is based on the work by Scott Chacon for
 the book Pro Git, <http://progit.org/>.
 
-## Changes and corrections
+## Changes and Corrections
 
 This book is hosted on Github - if you have any suggestions, comments or
 corrections, just fork the book, write your changes, and send us a pull

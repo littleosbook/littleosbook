@@ -6,12 +6,13 @@ address and a limit. To address a byte in segmented memory, you use a 48-bit
 *logical address*: 16 bits that specifies the segment, and 32-bits to specify
 what offset within that segment you want. The offset is added to the base
 address of the segment, and the resulting linear address is checked against the
-segment's limit - see the figure below. If everything checks out fine,
-(including access-right-checks ignored for now), this results in a *linear
-address*. If paging is disabled, this linear address space is mapped 1:1 on
-the *physical address* space, and the physical memory can be accessed.
+segment's limit - see the figure below. If everything works out fine,
+(including access-right checks ignored for now), the results is a *linear
+address*. If paging is disabled (see the chapter on [paging](#paging), this
+linear address space is mapped 1:1 on the *physical address* space, and the
+physical memory can be accessed.
 
-![Figure: Translation of logical addresses to linear addresses.
+![Translation of logical addresses to linear addresses.
 ](images/intel_3_5_logical_to_linear.png)
 
 To enable segmentation you need to set up a table that describes each segment -
@@ -21,7 +22,7 @@ set up and managed by user-space processes, and each process have their own LDT.
 LDT's can be used if a more complex segmentation model is desired - we won't
 use it. The GDT shared by everyone - it's global.
 
-## Accessing memory
+## Accessing Memory
 
 Most of the time when we access memory we don't have to explicitly specify the
 segment we want to use. The processor has six 16-bit segment registers: `cs`,
@@ -53,9 +54,9 @@ func:
     ret
 ~~~
 
-(You don't need to use `ss` when accessing the stack, or `ds` when accessing
-other memory. But it is convenient, and makes it possible to use the implicit
-style above.)
+(You don't need to use `ss` for storing the stack segment selector, or `ds` for
+the data segment selector, but it is convenient, and makes it possible to use
+the implicit style above.)
 
 Segment descriptors and their fields are described in figure 3-8 in the Intel
 manual [@intel3a].
@@ -68,12 +69,12 @@ need at least two segment descriptors (plus the null descriptor) for our GDT
 (and two more later when we enter [user mode](#user-mode), see the [segments
 for user mode](#segments-for-user-mode) section). This is because the
 descriptor contains more information than just the base and limit fields. The
-two most relevant fields here are the Type field and the Descriptor Privilege
-Level (DPL) field.
+two most relevant fields here are the _Type_ field and the _Descriptor Privilege
+Level_ (DPL) field.
 
 The table 3-1, chapter 3, in the Intel manual [@intel3a] specifies the values
 for the Type field, and it is because of this that we need at least two
-descriptors: One to execute code (to put in `cs`) (Execute-only or
+segments: One segment to execute code (to put in `cs`) (Execute-only or
 Execute-Read) and one to read and write data (Read/Write) (to put in the other
 segment registers).
 
@@ -100,9 +101,9 @@ Note that the segments overlap - they both encompass the entire linear address
 space. In our minimal setup we'll only use segmentation to get privilege levels.
 See the [@intel3a], chapter 3, for details on the other descriptor fields.
 
-## Creating and loading the GDT
+## Creating and Loading the GDT
 
-Creating the GDT can easily be done both in C and assembler. A static
+Creating the GDT can be done both in C and assembly. A static
 fixed-size array should do the trick.
 
 To load the GDT into the processor we use the `lgdt` instruction, which takes
@@ -111,7 +112,7 @@ the address of a struct that specifies the start and size of the GDT:
     32-bit: start of GDT
     16-bit: size of GDT (8 bytes * num entries)
 
-We have three entries.
+It is easiest to encode this information using a "packed struct".
 
 If `eax` has an address to such a struct, we can just to the following:
 
@@ -119,21 +120,27 @@ If `eax` has an address to such a struct, we can just to the following:
 lgdt [eax]
 ~~~
 
+It might be easier if you make this instruction available from C, the same way
+as was done with `in` and `out`.
+
 Now that the processor knows where to look for the segment descriptors we need
 to load the segment registers with the corresponding segment selectors. The
 content of a segment selector is described in the table below.
 
--------------------------------------------------------------------------------
-  Bits Name             Description
------- ---------------- -------------------------------------------------------
-   0-1 RPL              Requested Privilege Level - we want to execute in PL0
-                        for now.
+    Bit:     | 15                                3 | 2  | 1 0 |
+    Content: | offset (index)                      | ti | rpl |
 
-     2 Table Indicator  0 means that this specifies a GDT segment, 1 means an
-                        LDT Segment.
+-------------------------------------------------------------------------
+Name             Description
+---------------- -------------------------------------------------------
+rpl              Requested Privilege Level - we want to execute in PL0
+                 for now.
 
-  3-15 Offset (Index)   Offset within descriptor table.
--------------------------------------------------------------------------------
+ti               Table Indicator. 0 means that this specifies a GDT segment, 1
+                 means an LDT Segment.
+
+offset (index)   Offset within descriptor table.
+------------------------------------------------------------------------
 
 Table: The layout of segment selectors.
 
@@ -171,7 +178,7 @@ Whenever we load a new segment selector into a segment register, the processor
 reads the entire descriptor and stores it in shadow registers within the
 processor.
 
-## Further reading
+## Further Reading
 
 - Chapter 3 of the Intel manual [@intel3a] is quite good; low-level and
   technical.

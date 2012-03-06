@@ -1,10 +1,10 @@
 # User Mode
 
-User mode is finally almost within our reach. There's just a few more steps
+User mode is now almost within our reach. There's just a few more steps
 required. They don't seem too much work on paper, but they can take quite a few
 hours to get right in code and design.
 
-## Segments for user mode
+## Segments for User Mode
 
 To enable user mode we need to add two more segments to the GDT. They are very
 similar to the kernel segments we added when we [set up the
@@ -23,14 +23,14 @@ segments can still be used to address the entire address space, so just using
 these segments for user mode code will not protect the kernel. For that we need
 paging.
 
-## Setting up for user mode
+## Setting Up For User Mode
 
 There are a few things every user mode process needs:
 
 - Page frames for code, data and stack. For now we can just allocate one page frame
   for the stack, and enough page frames to fit the code and fixed-size data.
 
-- We need to copy the binary from the GRUB modules to the appropriate frames.
+- We need to copy the binary from the GRUB modules to the frames used for code.
 
 - We need a page directory and page tables to map these page frames into
   memory. At least two page tables are needed, because the code and data should
@@ -39,9 +39,9 @@ There are a few things every user mode process needs:
   U/S flag is set to allow PL3 access.
 
 It might be convenient to store these in a struct of some kind, dynamically
-allocated with the kernel `malloc`. 
+allocated with the kernel `malloc`.
 
-## Entering user mode
+## Entering User Mode
 
 The only way to execute code with a lower privilege level than the current
 privilege level (CPL) is to execute an `iret` or `lret` instruction - interrupt
@@ -72,8 +72,8 @@ of the Intel manual [@intel3a]. Most important for us is the interrupt enable
 (IF) flag. When in PL3 we aren't allowed to use `sti` like we'd normally do to
 enable interrupts. If interrupts are disabled when we enter user mode, we can't
 enable them when we get there. When we use `iret` to enter user mode it will
-set `eflags` for us, so setting the IF flag on the stack will enable interrupts
-in user mode.
+set `eflags` for us, so setting the IF flag in the `eflags` entry on the stack
+will enable interrupts in user mode.
 
 For now, we should have interrupts disabled, as it requires a little more
 twiddling to get inter-privilege level interrupts to work properly. See the
@@ -97,7 +97,7 @@ selector as `ss`. They can be set the ordinary way, with `mov`.
 Now we are ready to execute `iret`. If everything has been set up right, we now
 have a kernel that can enter user mode. Yay!
 
-## Using C for user mode programs
+## Using C for User Mode Programs
 
 The kernel is compiled as an ELF [@wiki:elf] binary, which is a format that
 allows for more complex and convenient layouts and functionality than a plain
@@ -167,15 +167,15 @@ When we compile user programs we want the usual `CFLAGS`:
 
 And these `LDFLAGS`:
 
-    -T link.ld -melf_i386
+    -T link.ld -melf_i386  # emulate 32 bits ELF, the binary output is specified in the linker script
 
-### A C library
+### A C Library
 
 It might now be interesting to start thinking about writing a short libc for
 your programs. Some of the functionality require [system calls](#system-calls)
 to work, but some, such as the `string.h` functions, does not.
 
-## Further reading
+## Further Reading
 
 - Gustavo Duarte has an article on privilege levels:
   <http://duartes.org/gustavo/blog/post/cpu-rings-privilege-and-protection>

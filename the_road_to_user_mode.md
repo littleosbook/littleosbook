@@ -2,28 +2,27 @@
 
 Now that the kernel boots, prints to screen and reads from keyboard - what do
 we do? Usually, a kernel is not supposed to do the application logic itself,
-but leave that for actual applications. The kernel creates the proper
+but leave that for applications. The kernel creates the proper
 abstractions (for memory, files, devices, etc.) so that application development
 becomes easier, performs tasks on behalf of applications (system calls), and
 [schedules processes](#scheduling).
 
-User mode, in contrast with kernel mode, is how the user's programs executes.
-It is less privileged than the kernel, and will prevent badly written user
-programs from messing with other programs or the kernel. Badly written kernels
-are free to mess up what they want.
+User mode, in contrast with kernel mode, is the environment in which the user's
+programs execute.  It is less privileged than the kernel, and will prevent
+badly written user programs from messing with other programs or the kernel.
+Badly written kernels are free to mess up what they want.
 
 There's quite a way to go until we get there, but here follows a
 quick-and-dirty start.
 
-## Loading a program
+## Loading a Program
 
 Where do we get the application from? Somehow we need to load the code we want
 to execute into memory. More feature complete operating system usually have
 drivers and file system that enables them load the software from a CD-ROM
-drive, a hard disk or a floppy disk. We'll do file systems in a [later
-section](#file-systems).
+drive, a hard disk or a floppy disk.
 
-Instead of creating all these drivers and file systems, we can simply use a
+Instead of creating all these drivers and file systems, we will use a
 feature in GRUB called modules to load our program.
 
 ### GRUB Modules
@@ -45,7 +44,7 @@ modules on page boundaries when loading them (see the chapter about
 ["Paging"](#paging) for details about page alignment).
 
 To instruct GRUB how to load our modules, the "multiboot header", that is the
-first bytes of the kernel, must be updated as
+first bytes of the kernel, must be updated as follows:
 
 ~~~ {.nasm}
 ; in file `loader.s`
@@ -69,13 +68,14 @@ other things describes at which addresses the modules are loaded. Therefore,
 you probably want to push `ebx` on the stack before calling `kmain` to make
 into an argument for `kmain`.
 
-## Executing the program
+## Executing a Program
 
-### A very simple program
+### A Very Simple Program
 
-Since for now any program we'd write would have trouble to communicate with the
-outside, a very short program that writes a value to a register suffices.
-Halting Bochs and reading its log should verify that the program has run.
+Any program we write at this stage won't be able to communicate with the
+outside. Therefore, a very short program that writes a value to a register
+suffices. Halting Bochs and reading its log should verify that the program has
+run.
 
 ~~~ {.nasm}
 ; set eax to some distinguishable number, to read from the log afterwards
@@ -89,7 +89,7 @@ jmp $
 ### Compiling
 
 Since our kernel cannot parse advanced executable formats, we need to compile
-the code into a flat binary. NASM can do it like this:
+the code into a flat binary. NASM can do it with the flag `-f`:
 
     nasm -f bin program.s -o program
 
@@ -97,13 +97,13 @@ This is all we need. You must now move the file `program` to the folder
 `iso/modules`.
 
 
-### Finding the program in memory
+### Finding the Program in Memory
 Before jumping to the program, we must find where it resides in memory.
 Assuming that the contents of the `ebx` is passed as an argument to `kmain`, we
 can do this entirely from C.
 
 The pointer in `ebx` points to a multiboot-structure [@multiboot]. Download the
-file `multiboot.h` from
+`multiboot.h` file from
 <http://www.gnu.org/software/grub/manual/multiboot/html_node/multiboot.h.html>,
 which describes the structure.
 
@@ -125,11 +125,11 @@ the `multiboot_info_t` stucture. You should also check the field `mods_count`
 to make sure it's exactly 1. For more details about the multiboot structure,
 see [@multiboot].
 
-### Jumping to the code
+### Jumping to the Code
 What we'd like to do now is just jump to the address of the GRUB-loaded module.
 Since it is easier to parse the multiboot structure in C, calling the code from
 C is more convenient, but it can of course be done with `jmp` (or `call`) in
-assembler as well.
+assembly as well.
 
 ~~~ {.c}
 typedef void (*call_module_t)(void);
@@ -140,15 +140,15 @@ start_program();
 ~~~
 
 If we start the kernel, wait until it has run and entered the infinite loop in
-the program, and halt Bochs we should see `0xDEADBEEF` in `eax`. We have
-successfully started a program in our OS!
+the program, and then halt Bochs, we should see `0xDEADBEEF` in `eax` via the
+Bochs log. We have successfully started a program in our OS!
 
-## The beginning of user mode
+## The Beginning of User Mode
 
 The program we've written now runs in the same mode as the kernel, we've just
-entered it in a somewhat peculiar way. Do enable applications to really execute
-in user mode, we'll need to do [segmentation](#segmentation), [paging](#paging)
-and [allocate page frames](#page-frame-allocation).
+entered it in a somewhat peculiar way. To enable applications to execute
+at a different privilege level, we'll need to do [segmentation](#segmentation),
+[paging](#paging) and [allocate page frames](#page-frame-allocation).
 
-It's quite a lot of work and technical details to go through. But in a few
-chapters we'll have working user mode programs.
+It's quite a lot of work and technical details to go through, but in a few
+chapters you'll have a working user mode programs.

@@ -1,18 +1,18 @@
 # Getting to C
 
 Now that you've managed to boot your operating system, it's time to think about
-the language we're currently using, assembler. Assembly is very good
-interacting with CPU and have maximum control over every aspect of the code.
-However, at least for the authors, C is a much more convenient language to
-write in. Therefore, we would like to use C as much as possible and only
+the language we're currently using, assembly. Assembly is very good for
+interacting with the CPU and enables maximum control over every aspect of the
+code.  However, at least for the authors, C is a much more convenient language
+to use. Therefore, we would like to use C as much as possible and only
 assembler where it make sense.
 
-## Setting up a stack
+## Setting Up a Stack
 Before we can program in C, we need a stack. This is because we can _not_
-guarantee that a C program does _not_ makes use of the stack, the same we can
-in assembly. Setting up a stack is not harder than to make the `esp` register
-point to the end of an area of free memory (remember that the stack grows
-towards lower addresses).
+guarantee that a C program does _not_ make use of a stack. Setting up a stack
+is not harder than to make the `esp` register point to the end of an area of
+free memory that is correctly aligned (remember that the stack grows towards
+lower addresses).
 
 We could make `esp` just point to some area in memory, since so far, the only
 thing in the memory is GRUB, BIOS, the OS kernel and some memory-mapped I/O.
@@ -29,24 +29,24 @@ be used
 KERNEL_STACK_SIZE equ 4096                  ; size of stack in bytes
 
 section .bss
-align 4
-kernel_stack:
+align 4                                     ; align at 4 bytes
+kernel_stack:                               ; label points to beginning of memory
     resb KERNEL_STACK_SIZE                  ; reserve stack for the kernel
 ~~~
 
 Setting up the stack pointer is then trivial
 
 ~~~ {.nasm}
-mov esp, kernel_stack + KERNEL_STACK_SIZE   ; point esp start of the stack
+mov esp, kernel_stack + KERNEL_STACK_SIZE   ; point esp to the start of the stack (end of memory area)
 ~~~
 
-## Calling C code from assembly
+## Calling C Code From Assembly
 The next step is to call a C function from the assembly code. There are many
 different calling conventions for how to call C code from assembly
 [@wiki:ccall], but we will use the _cdecl_ calling convention, since it's the
 one used by GCC. The cdecl calling convention states that arguments to a
-function should be passed via the stack. The arguments of the function should
-be pushed on the stack in a right-to-left order, that is, you push the
+function should be passed via the stack (on x86). The arguments of the function
+should be pushed on the stack in a right-to-left order, that is, you push the
 rightmost argument first. The return value of the function is placed in the
 `eax` register. The following is an example
 
@@ -58,7 +58,7 @@ int sum_of_three(int arg1, int arg2, int arg3)
 ~~~
 
 ~~~ {.nasm}
-external sum_of_three   ; the function sum_of_three is define elsewhere
+external sum_of_three   ; the function sum_of_three is defined elsewhere
 
 push dword 3            ; arg3
 push dword 2            ; arg2
@@ -66,7 +66,7 @@ push dword 1            ; arg1
 call sum_of_three       ; call the function, the result will be in eax
 ~~~
 
-### Packing structs
+### Packing Structs
 In the rest of book, you will often come across "configuration bytes" that are
 a collection of bits in a very specific order. For example, a configuration
 could look like
@@ -74,7 +74,7 @@ could look like
     Bit:     | 31           16 | 15     8 | 7     0 |
     Content: | address         | index    | config  |
 
-Instead of using a unsigned integer `unsigned int` for handling such
+Instead of using an unsigned integer, `unsigned int`, for handling such
 configurations, it is much more convenient to use "packed structures". When
 creating the following struct in C:
 
@@ -104,7 +104,7 @@ struct example {
 Note that `__attribute__((packed))` is not part of the C standard, so it might
 not work with all compilers (it works with GCC and Clang).
 
-## Compiling C code
+## Compiling C Code
 When compiling the C code for the OS, quite a lot of flags to GCC has to be
 used. The reason for this is that the C code should _not_ assume the presence
 of the standard library, since there is not standard library available in our
@@ -124,7 +124,7 @@ call from `loader.s`. At
 this point in time, `kmain` probably won't need any arguments, but in later
 chapters it will.
 
-## Build tools
+## Build Tools
 Now is also probably a good time to set up some build tools to make it easier
 to compile and run the OS. We recommend using Make [@make], but there are
 plenty of other build systems available. A simple Makefile for the OS could
@@ -144,7 +144,7 @@ all: kernel.elf
 kernel.elf: $(OBJECTS)
 	ld $(LDFLAGS) $(OBJECTS) -o kernel.elf
 
-os.iso: kernel.elf iso
+os.iso: kernel.elf
     cp kernel.elf iso/boot/kernel.elf
     genisoimage -R                              \
                 -b boot/grub/stage2_eltorito    \
@@ -182,11 +182,11 @@ If your directory now looks like
     |-- kmain.c
     |-- loader.s
 
-then you should be able to start the OS in BOCHS with the simple command
+then you should be able to start the OS in Bochs with the simple command
 
     make run
 
-## Further reading
+## Further Reading
 
 - Kernigan & Richies book, _The C Programming Language, Second Edition_, [@knr]
   is great for learning about all the aspects of C
