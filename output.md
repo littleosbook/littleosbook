@@ -3,32 +3,33 @@
 After booting our very small operating system kernel, the next task will be to
 be able to display text on the console. In this chapter we will create our
 first _drivers_, that is, code that acts as an layer between our kernel and the
-hardware, providing a nicer abstraction than speaking directly to the hardware.
-The first part of this chapter creates a driver for the framebuffer
-[@wiki:fb] to be able to display text to the user. The second part will
-create a driver for the serial port, since Bochs can store output from the
-serial port in a file, effectively creating a logging mechanism for our
-operating system!
+hardware, providing a nicer abstraction than communicating directly with the
+hardware.  The first part of this chapter creates a driver for the
+_framebuffer_ [@wiki:fb] to be able to display text to the user. The second
+part will create a driver for the serial port, since Bochs can store output
+from the serial port in a file, effectively creating a logging mechanism for
+our operating system!
 
 ## Talking to the Hardware
 There are usually two different ways to "talk" to the hardware,
 _memory-mapped I/O_ and _I/O ports_.
 
-If the hardware uses memory-mapped I/O, then you
-can write to a specific memory address and the hardware will be automatically
-get the new data. One example of this is the framebuffer, which will be
-discussed more in detail later. If you write the value
-`0x410F` to address `0x000B8000`, you will see the letter A in white color on a
-black background (see the section on [the framebuffer](#the-framebuffer) for
-more details).
+TODO: explain the magic numbers, and whether they are always so.
+
+If the hardware uses memory-mapped I/O, then you can write to a specific memory
+address and the hardware will be automatically get the new data. One example of
+this is the framebuffer, which will be discussed in more detail later. If you
+write the value `0x410F` to address `0x000B8000`, you will see the letter A in
+white color on a black background (see the section on [the
+framebuffer](#the-framebuffer) for more details).
 
 If the hardware uses I/O ports, then the assembly instructions `out` and `in`
 must be used to communicate with the device. `out` takes two parameters, the
-address of the I/O port and the value to send. `in` takes a single
-parameter, simply address of the I/O port and returns data. One can think of
-I/O ports as communicating with the hardware the same way as you communicate
-with a server using sockets. The cursor (the blinking rectangle)
-of the framebuffer is one example of hardware controlled via I/O ports.
+address of the I/O port and the value to send. `in` takes a single parameter,
+simply the address of the I/O port, and returns data. One can think of I/O
+ports as communicating with the hardware the same way as you communicate with a
+server using sockets. The cursor (the blinking rectangle) of the framebuffer is
+one example of hardware controlled via I/O ports.
 
 ## The Framebuffer
 The framebuffer is a hardware device that is capable of displaying a buffer of
@@ -62,154 +63,158 @@ write the character A with a green foreground (2) and dark grey background (8)
 at place (0,0), the following assembly instruction is used
 
 ~~~ {.nasm}
-mov [0x000B8000], 0x4128
+    mov [0x000B8000], 0x4128
 ~~~
 
-The second cell then corresponds to row zero, column one and it's address is
+The second cell then corresponds to row zero, column one and its address is:
 
+~~~
     0x000B8000 + 16 = 0x000B8010
+~~~
 
 This can all be done a lot easier in C by treating the address `0x000B8000` as
 a char pointer, `char *fb = (char *) 0x000B8000`. Then, writing A to at place
 (0,0) with green foreground and dark grey background becomes:
 
 ~~~ {.nasm}
-fb[0] = 'A';
-fb[1] = 0x28;
+    fb[0] = 'A';
+    fb[1] = 0x28;
 ~~~
 
-This can of course be wrapped into a nice function
+This can of course be wrapped into a nice function:
 
 ~~~ {.c}
-/** fb_write_cell:
- *  Writes a character with the given foreground and background to position i
- *  in the framebuffer.
- *
- *  @param i  The location in the framebuffer
- *  @param c  The character
- *  @param fg The foreground color
- *  @param bg The background color
- */
-void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg)
-{
-    fb[i] = c;
-    fb[i + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F)
-}
+    /** fb_write_cell:
+     *  Writes a character with the given foreground and background to position i
+     *  in the framebuffer.
+     *
+     *  @param i  The location in the framebuffer
+     *  @param c  The character
+     *  @param fg The foreground color
+     *  @param bg The background color
+     */
+    void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg)
+    {
+        fb[i] = c;
+        fb[i + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F)
+    }
 ~~~
 
-which can then be used
+We can use the function like this:
 
 ~~~ {.c}
-#define FB_GREEN     2
-#define FB_DARK_GREY 8
+    #define FB_GREEN     2
+    #define FB_DARK_GREY 8
 
-fb_write_cell(0, 'A', FB_GREEN, FB_DARK_GREY);
+    fb_write_cell(0, 'A', FB_GREEN, FB_DARK_GREY);
 ~~~
 
 ### Moving the Cursor
 
-Moving the cursor of the framebuffer is done via two different I/O ports.
-The cursor position is determined via a 16 bits integer, 0 means row zero,
-column zero, 1 means row zero, column one, 80 means row one, column zero and so
-on. Since the position is 16 bits large, and the `out` assembly instruction
-only take 8 bits as data, the position must be sent in two turns, first 8 bits
-then the next 8 bits. The framebuffer has two I/O ports, one for accepting the
-data, and one for describing the data being received. Port `0x3D4` is the
-command port that describes the data and port `0x3D5` is for the data itself.
+Moving the cursor of the framebuffer is done via two different I/O ports.  The
+cursor position is determined with a 16 bits integer, 0 means row zero, column
+zero, 1 means row zero, column one, 80 means row one, column zero, and so on.
+Since the position is 16 bits large, and the `out` assembly instruction only
+take 8 bits as data, the position must be sent in two turns, first 8 bits then
+the next 8 bits. The framebuffer has two I/O ports, one for accepting the data,
+and one for describing the data being received. Port `0x3D4` is the command
+port that describes the data and port `0x3D5` is for the data itself.
 
 To set the cursor at row one, column zero (position `80 = 0x0050`), one would
-use the following assembly instructions
+use the following assembly instructions:
 
 ~~~ {.nasm}
-out 0x3D4, 14      ; 14 tells the framebuffer to expect the highest 8 bits of the position
-out 0x3D5, 0x00    ; sending the highest 8 bits of 0x0050
-out 0x3D4, 15      ; 15 tells the framebuffer to expect the lowest 8 bits of the position
-out 0x3D5, 0x50    ; sending the lowest 8 bits of 0x0050
+    out 0x3D4, 14      ; 14 tells the framebuffer to expect the highest 8 bits of the position
+    out 0x3D5, 0x00    ; sending the highest 8 bits of 0x0050
+    out 0x3D4, 15      ; 15 tells the framebuffer to expect the lowest 8 bits of the position
+    out 0x3D5, 0x50    ; sending the lowest 8 bits of 0x0050
 ~~~
 
-The `out` assembly instruction can't be done in C, therefore it's a good idea
+The `out` assembly instruction can't be done in C. therefore it's a good idea
 to wrap it an assembly function which can be accessed from C via the cdecl
 calling standard [@wiki:ccall]:
 
 ~~~ {.nasm}
-global outb             ; make the label outb visible outside this file
+    global outb             ; make the label outb visible outside this file
 
-; outb - send a byte to an I/O port
-; stack: [esp + 8] the data byte
-;        [esp + 4] the I/O port
-;        [esp    ] return address
-outb:
-    mov al, [esp + 8]    ; move the data to be sent into the al register
-    mov dx, [esp + 4]    ; move the address of the I/O port into the dx register
-    out dx, al           ; send the data to the I/O port
-    ret                  ; return to the calling function
+    ; outb - send a byte to an I/O port
+    ; stack: [esp + 8] the data byte
+    ;        [esp + 4] the I/O port
+    ;        [esp    ] return address
+    outb:
+        mov al, [esp + 8]    ; move the data to be sent into the al register
+        mov dx, [esp + 4]    ; move the address of the I/O port into the dx register
+        out dx, al           ; send the data to the I/O port
+        ret                  ; return to the calling function
 ~~~
 
 By storing this function in a file called `io.s` and also creating a header
 `io.h`, the `out` assembly instruction can now be conveniently accessed from C:
 
 ~~~ {.c}
-#ifndef INCLUDE_IO_H
-#define INCLUDE_IO_H
+    #ifndef INCLUDE_IO_H
+    #define INCLUDE_IO_H
 
-/** outb:
- *  Sends the given data to the given I/O port. Defined in io.s
- *
- *  @param port The I/O port to send the data to
- *  @param data The data to send to the I/O port
- */
-void outb(unsigned short port, unsigned char data);
+    /** outb:
+     *  Sends the given data to the given I/O port. Defined in io.s
+     *
+     *  @param port The I/O port to send the data to
+     *  @param data The data to send to the I/O port
+     */
+    void outb(unsigned short port, unsigned char data);
 
-#endif /* INCLUDE_IO_H */
+    #endif /* INCLUDE_IO_H */
 ~~~
 
 Moving the cursor can now be wrapped in a C function:
 
 ~~~ {.c}
-#include "io.h"
+    #include "io.h"
 
-/* The I/O ports */
-#define FB_COMMAND_PORT         0x3D4
-#define FB_DATA_PORT            0x3D5
+    /* The I/O ports */
+    #define FB_COMMAND_PORT         0x3D4
+    #define FB_DATA_PORT            0x3D5
 
-/* The I/O port commands */
-#define FB_HIGH_BYTE_COMMAND    14
-#define FB_LOW_BYTE_COMMAND     15
+    /* The I/O port commands */
+    #define FB_HIGH_BYTE_COMMAND    14
+    #define FB_LOW_BYTE_COMMAND     15
 
-/** fb_move_cursor:
- *  Moves the cursor of the framebuffer to the given position
- *
- *  @param pos The new position of the cursor
- */
-void fb_move_cursor(unsigned short pos)
-{
-    outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
-    outb(FB_DATA_PORT,    ((pos >> 8) & 0x00FF));
-    outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
-    outb(FB_DATA_PORT,    pos & 0x00FF);
-}
+    /** fb_move_cursor:
+     *  Moves the cursor of the framebuffer to the given position
+     *
+     *  @param pos The new position of the cursor
+     */
+    void fb_move_cursor(unsigned short pos)
+    {
+        outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
+        outb(FB_DATA_PORT,    ((pos >> 8) & 0x00FF));
+        outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
+        outb(FB_DATA_PORT,    pos & 0x00FF);
+    }
 ~~~
 
 ### The Driver
-Now that the basic functions, it's time to think about a driver interface for
-the framebuffer. There is no right or wrong about what functionality the
-interface should provide, but one suggestion is to have a `write` function with
-the declaration
+Now that the basic functions are there it's time to think about a driver
+interface for the framebuffer. There is no right or wrong in what functionality
+the interface should provide, but one suggestion is to have a `write` function
+declared like this:
 
+~~~ {.c}
     int write(char *buf, unsigned int len);
+~~~
 
-that writes the contents of the buffer to the screen. The `write` function
-would automatically advance the cursor after a character has been written and
-also scroll the screen if necessary.
+`write` writes the contents of the buffer to the screen. The `write` function
+would automatically advance the cursor after a character has been written, and
+scroll the screen if necessary.
 
 ## The Serial Ports
 The serial port [@wiki:serial] is an interface for communicating between
-hardware devices, and it's usually not available on modern computers. However,
-the serial port is easy to use, and more importantly, can be used as a logging
-utility together with Bochs. A computer usually has several serial ports, but
-we will only make use of one of the ports, since we only will use it for
-logging. Furthermore, we will only use it for output, not input. The serial
-ports are controlled completely via I/O ports.
+hardware devices and it's usually not available on modern computers. However,
+the serial port is easy to use, and, more importantly, can be used as a logging
+utility in Bochs. A computer usually has several serial ports, but we will only
+make use of one of the ports, since we only will use it for logging.
+Furthermore, we will only use it for output, not input. The serial ports are
+controlled completely via I/O ports.
 
 ### Configuring the Serial Port
 The first data that needs to be sent to the serial port is some configuration
@@ -217,15 +222,15 @@ data. In order for two hardware devices to be able to talk each other, they
 must agree upon some things. These things include:
 
 - The speed used when sending data (bit or baud rate)
-- If any error checking is used for the data (parity bit, stop bits)
-- The number of bits that represents a unit of data (data bits)
+- If any error checking should be used for the data (parity bit, stop bits)
+- The number of bits that represent a unit of data (data bits)
 
 ### Configuring the Line
 Configuring the line means to configure how data is being sent over the line.
 The serial port has an I/O port, the _line command port_ that is used for
 configuring the line.
 
-First, the speed for sending data will be set. The serial port has an internal
+First the speed for sending data will be set. The serial port has an internal
 clock that runs at 115200 Hz. Setting the speed means sending a divisor to the
 serial port, for example sending 2 results in a speed of `115200 / 2 = 57600`
 Hz.
@@ -233,60 +238,61 @@ Hz.
 The divisor is a 16 bit number, but we can only send 8 bits at a time.
 Therefore, we must first send an instruction telling the serial port to expect
 first the highest 8 bits, then the lowest. This is done by sending `0x80` to
-the send line command port. The code then becomes:
+the send line command port. For can look like this:
 
 ~~~ {.c}
-#include "io.h" /* io.h is implement in the section "Moving the cursor" */
+    #include "io.h" /* io.h is implement in the section "Moving the cursor" */
 
-/* The I/O ports */
+    /* The I/O ports */
 
-/* All the I/O ports are calculated relative to the data port. This is because
- * all serial ports (COM1, COM2, COM3, COM4) have their ports in the same
- * order, but they start at different values.
- /
+    /* All the I/O ports are calculated relative to the data port. This is because
+     * all serial ports (COM1, COM2, COM3, COM4) have their ports in the same
+     * order, but they start at different values.
+     /
 
-#define SERIAL_COM1_BASE                0x3F8      /* COM1 base port */
+    #define SERIAL_COM1_BASE                0x3F8      /* COM1 base port */
 
-#define SERIAL_DATA_PORT(base)          (base)
-#define SERIAL_FIFO_COMMAND_PORT(base)  (base + 2)
-#define SERIAL_LINE_COMMAND_PORT(base)  (base + 3)
-#define SERIAL_MODEM_COMMAND_PORT(base) (base + 4)
-#define SERIAL_LINE_STATUS_PORT(base)   (base + 5)
+    #define SERIAL_DATA_PORT(base)          (base)
+    #define SERIAL_FIFO_COMMAND_PORT(base)  (base + 2)
+    #define SERIAL_LINE_COMMAND_PORT(base)  (base + 3)
+    #define SERIAL_MODEM_COMMAND_PORT(base) (base + 4)
+    #define SERIAL_LINE_STATUS_PORT(base)   (base + 5)
 
-/* The I/O port commands */
+    /* The I/O port commands */
 
-/* SERIAL_LINE_ENABLE_DLAB:
- * Tells the serial port to expect first the highest 8 bits on the data port,
- * then the lowest 8 bits will follow
- */
-#define SERIAL_LINE_ENABLE_DLAB         0x80
+    /* SERIAL_LINE_ENABLE_DLAB:
+     * Tells the serial port to expect first the highest 8 bits on the data port,
+     * then the lowest 8 bits will follow
+     */
+    #define SERIAL_LINE_ENABLE_DLAB         0x80
 
-/** serial_configure_baud_rate:
- *  Sets the speed of the data being sent. The default speed of a serial
- *  port is 115200 bits/s. The argument is a divisor of that number, hence
- *  the resulting speed becomes (115200 / divisor) bits/s.
- *
- *  @param com      The COM port to configure
- *  @param divisor  The divisor
- */
-void serial_configure_baud_rate(unsigned short com, unsigned short divisor)
-{
-    outb(SERIAL_LINE_COMMAND_PORT(com),
-         SERIAL_LINE_ENABLE_DLAB);
-    outb(SERIAL_DATA_PORT(com),
-         (divisor >> 8) & 0x00FF);
-    outb(SERIAL_DATA_PORT(com),
-         divisor & 0x00FF);
-}
+    /** serial_configure_baud_rate:
+     *  Sets the speed of the data being sent. The default speed of a serial
+     *  port is 115200 bits/s. The argument is a divisor of that number, hence
+     *  the resulting speed becomes (115200 / divisor) bits/s.
+     *
+     *  @param com      The COM port to configure
+     *  @param divisor  The divisor
+     */
+    void serial_configure_baud_rate(unsigned short com, unsigned short divisor)
+    {
+        outb(SERIAL_LINE_COMMAND_PORT(com),
+             SERIAL_LINE_ENABLE_DLAB);
+        outb(SERIAL_DATA_PORT(com),
+             (divisor >> 8) & 0x00FF);
+        outb(SERIAL_DATA_PORT(com),
+             divisor & 0x00FF);
+    }
 ~~~
 
-Next, the way data is being sent must be configured, this is also done via the
-line command port by sending 8 bits. The layout of the 8 bits are as follows
+Next, the way that data should be sent must be configured. This is also done
+via the line command port by sending 8 bits. The layout of the 8 bits looks
+like this:
 
     Bit:     | 7 | 6 | 5 4 3 | 2 | 1 0 |
     Content: | d | b | prty  | s | exp |
 
-The content is
+The contents are:
 
  Name Description
 ----- ------------
@@ -298,24 +304,24 @@ The content is
 
 We will use the mostly standard value `0x03` [@osdev:serial], meaning a length
 of 8 bits, no parity bit, one stop bit and break control disabled. This is sent
-to the line command port, resulting in
+to the line command port, resulting in:
 
 ~~~ {.c}
-/** serial_configure_line:
- *  Configures the line of the given serial port. The port is set to have a
- *  data length of 8 bits, no parity bits, one stop bit and break control
- *  disabled.
- *
- *  @param com  The serial port to configure
- */
-void serial_configure_line(unsigned short com)
-{
-    /* Bit:     | 7 | 6 | 5 4 3 | 2 | 1 0 |
-     * Content: | d | b | prty  | s | exp |
-     * Value:   | 0 | 0 | 0 0 0 | 0 | 1 1 | = 0x03
+    /** serial_configure_line:
+     *  Configures the line of the given serial port. The port is set to have a
+     *  data length of 8 bits, no parity bits, one stop bit and break control
+     *  disabled.
+     *
+     *  @param com  The serial port to configure
      */
-    outb(SERIAL_LINE_COMMAND_PORT(com), 0x03);
-}
+    void serial_configure_line(unsigned short com)
+    {
+        /* Bit:     | 7 | 6 | 5 4 3 | 2 | 1 0 |
+         * Content: | d | b | prty  | s | exp |
+         * Value:   | 0 | 0 | 0 0 0 | 0 | 1 1 | = 0x03
+         */
+        outb(SERIAL_LINE_COMMAND_PORT(com), 0x03);
+    }
 ~~~
 
 For a more in-depth explanation of the values, see [@osdev:serial].
@@ -324,13 +330,13 @@ For a more in-depth explanation of the values, see [@osdev:serial].
 When data is transmitted via the serial port, it is placed in buffers, both
 when receiving and sending data. This way, if you send data to the serial
 port faster than it can send it over the wire, it will be buffered. However, if
-you send too much data too fast, the buffer will be full and then data will be
-dropped. The FIFO queue configuration byte looks like
+you send too much data too fast, the buffer will be full and data will be
+lost. The FIFO queue configuration byte looks like this:
 
     Bit:     | 7 6 | 5  | 4 | 3   | 2   | 1   | 0 |
     Content: | lvl | bs | r | dma | clt | clr | e |
 
-The content is
+The contents are:
 
  Name Description
 ----- ------------
@@ -350,17 +356,17 @@ We use the value `0xC7 = 11000111` that:
 
 For a more in-depth explanation of the values, see [@wikibook:serial]
 
-### Configuring the modem
+### Configuring the Modem
 The modem control register is used for very simple hardware flow control via
 the Ready To Transmit (RTS) and Data Terminal Ready (DTR) pins. When
 configuring the serial port before sending data, we want RTS and DTR to be 1.
 
-The modem configuration byte looks like
+The modem configuration byte looks like this:
 
     Bit:     | 7 | 6 | 5  | 4  | 3   | 2   | 1   | 0   |
     Content: | r | r | af | lb | ao2 | ao1 | rts | dtr |
 
-The contents is
+The contents are:
 
  Name Description
 ----- ------------
@@ -373,7 +379,7 @@ The contents is
   dtr Data Terminal Ready
 
 Since we don't need interrupts, because we won't handle any received data, we
-use the configuration value `0x03 = 00000011`, that is, RTS is set to 1 and DTR
+use the configuration value `0x03 = 00000011`. That is: RTS is set to 1 and DTR
 is set to 1.
 
 ### Writing to the Serial Port
@@ -385,70 +391,72 @@ status I/O port.
 
 Reading the contents of an I/O port is done via the `in` assembly
 instruction. There is no way to use the `in` instruction from C, so it has to
-be wrapped (the same way as the `out` instruction):
+be wrapped (the same way as we did with the `out` instruction):
 
 ~~~ {.nasm}
-global inb
+    global inb
 
-; inb - returns a byte from the given I/O port
-; stack: [esp + 4] The address of the I/O port
-;        [esp    ] The return address
-inb:
-    mov dx, [esp + 4]       ; move the address of the I/O port to the dx register
-    in  al, dx              ; read a byte from the I/O port and store it in the al register
-    ret                     ; return the read byte
+    ; inb - returns a byte from the given I/O port
+    ; stack: [esp + 4] The address of the I/O port
+    ;        [esp    ] The return address
+    inb:
+        mov dx, [esp + 4]       ; move the address of the I/O port to the dx register
+        in  al, dx              ; read a byte from the I/O port and store it in the al register
+        ret                     ; return the read byte
 ~~~
 
 ~~~ {.c}
-/* in file io.h */
+    /* in file io.h */
 
-/** inb:
- *  Read a byte from an I/O port.
- *
- *  @param port The address of the I/O port
- *  @return     The read byte
- */
-unsigned char inb(unsigned short port);
+    /** inb:
+     *  Read a byte from an I/O port.
+     *
+     *  @param port The address of the I/O port
+     *  @return     The read byte
+     */
+    unsigned char inb(unsigned short port);
 ~~~
 
 Checking if the transmit FIFO is empty can now be done from C:
 
 ~~~ {.c}
-#include "io.h"
+    #include "io.h"
 
-/** serial_is_transmit_fifo_empty:
- *  Checks whether the transmit FIFO queue is empty or not for the given COM
- *  port.
- *
- *  @param com The COM port
- *  @return 0 if the transmit FIFO queue is not empty
- *          1 if the transmit FIFO is empty
- */
-int serial_is_transmit_fifo_empty(unsigned int com)
-{
-    /* 0x20 = 0001 0000 */
-    return inb(SERIAL_LINE_STATUS_PORT(com)) & 0x20;
-}
+    /** serial_is_transmit_fifo_empty:
+     *  Checks whether the transmit FIFO queue is empty or not for the given COM
+     *  port.
+     *
+     *  @param com The COM port
+     *  @return 0 if the transmit FIFO queue is not empty
+     *          1 if the transmit FIFO is empty
+     */
+    int serial_is_transmit_fifo_empty(unsigned int com)
+    {
+        /* 0x20 = 0001 0000 */
+        return inb(SERIAL_LINE_STATUS_PORT(com)) & 0x20;
+    }
 ~~~
 
-Now, the writing to serial port means spinning while the transmit FIFO queue
+Now, writing to a serial port means spinning while the transmit FIFO queue
 isn't empty, and then writing to the data port.
 
 ### Configuring Bochs
-To use the serial port together with Bochs, you must tell Bochs via the
+To use the serial port together with Bochs you must tell Bochs via the
 `bochsrc.txt` file to save the output from the serial port to a file. This can
-be done with the `com1` config parameter:
+be done with the `com1` configuration parameter:
 
+~~~
     com1: enabled=1, mode=file, dev=com1.out"
+~~~
 
-The output will now be stored in the `com1.out` file.
+The output from serial port one will now be stored in the `com1.out` file.
 
 ### The Driver
 
-We recommend that you try to write a `printf` like function, see section 7.3 in
-[@knr]. We also recommend that you create some way of distinguish the
-severeness of log message, for example by prepending the messages with `DEBUG`,
-`INFO` or `ERROR`.
+We recommend that you try to write a `printf`-like function, see section 7.3 in
+[@knr]. We also recommend that you create some way of distinguishing the
+severeness of the log messages, for example by prepending the messages with
+`DEBUG`, `INFO` or `ERROR`.
 
 ## Further Reading
 - The book "Serial programming" (available on WikiBooks) has a great section on

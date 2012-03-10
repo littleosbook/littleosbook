@@ -3,7 +3,7 @@
 We are not required to have file systems in our operating system, but it is
 quite convenient, and it often plays a central part in many operations of
 several existing OS's, especially UNIX-like systems. Before we start the
-process of supporting multiple processes and system calls, we might want to
+process of supporting multiple processes and system calls we might want to
 consider implementing a simple file system.
 
 ## Why a File System?
@@ -13,7 +13,7 @@ run? How do programs output data? Read input?
 
 In UNIX-like systems, with their almost-everything-is-a-file convention, these
 problems are solved by the file systems. It might also be interesting to read a
-bit about the Plan 9 project, which takes this idea one step further (See
+bit about the Plan 9 project, which takes this idea one step further (see
 [further reading](#further-reading-6) below).
 
 ## A Simple File System
@@ -34,10 +34,10 @@ names and "addresses" of other files and directories.
 
 Each object in this file system will become contiguous, so they will be easy to
 read from our kernel. All objects will also have a fixed size (except for the
-last one, which can grow); it might be difficult to add new or modify existing
+last one, which can grow); It might be difficult to add new or modify existing
 files. We can make the file system read-only.
 
-`mmap` is a handy system call that makes writing the "file system-in-a-file"
+`mmap` is a handy system call that makes writing the "file-system-in-a-file"
 easier.
 
 ## Inodes and Writable File Systems

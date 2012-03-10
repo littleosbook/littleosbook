@@ -1,26 +1,26 @@
 # Segmentation
 
-Segmentation in x86 means accessing the memory through segments. Segments are
+_Segmentation_ in x86 means accessing the memory through segments. Segments are
 portions of the address space, possibly overlapping, specified by a base
 address and a limit. To address a byte in segmented memory, you use a 48-bit
-*logical address*: 16 bits that specifies the segment, and 32-bits to specify
-what offset within that segment you want. The offset is added to the base
-address of the segment, and the resulting linear address is checked against the
-segment's limit - see the figure below. If everything works out fine,
-(including access-right checks ignored for now), the results is a *linear
-address*. If paging is disabled (see the chapter on [paging](#paging), this
-linear address space is mapped 1:1 on the *physical address* space, and the
+_logical address_: 16 bits that specifies the segment, and 32-bits that
+specifies what offset within that segment you want. The offset is added to the
+base address of the segment, and the resulting linear address is checked
+against the segment's limit - see the figure below. If everything works out
+fine, (including access-right checks ignored for now), the results is a _linear
+address_. If paging is disabled (see the chapter on [paging](#paging)), this
+linear address space is mapped 1:1 on the _physical address_ space, and the
 physical memory can be accessed.
 
 ![Translation of logical addresses to linear addresses.
 ](images/intel_3_5_logical_to_linear.png)
 
 To enable segmentation you need to set up a table that describes each segment -
-a segment descriptor table. In x86, there are two types of descriptor tables:
-The global descriptor table (GDT) and local descriptor tables (LDT). An LDT is
-set up and managed by user-space processes, and each process have their own LDT.
-LDT's can be used if a more complex segmentation model is desired - we won't
-use it. The GDT shared by everyone - it's global.
+a _segment descriptor table_. In x86, there are two types of descriptor tables:
+The _Global Descriptor Table_ (GDT) and _Local Descriptor Tables_ (LDT). An LDT
+is set up and managed by user-space processes, and each process have their own
+LDT's.  LDT's can be used if a more complex segmentation model is desired - we
+won't use it. The GDT is shared by everyone - it's global.
 
 ## Accessing Memory
 
@@ -35,23 +35,23 @@ processes wish (we will set them, but not use them).
 Implicit use of segment registers:
 
 ~~~ {.nasm}
-func:
-    mov eax, [esp+4]
-    mov ebx, [eax]
-    add ebx, 8
-    mov [eax], ebx
-    ret
+    func:
+        mov eax, [esp+4]
+        mov ebx, [eax]
+        add ebx, 8
+        mov [eax], ebx
+        ret
 ~~~
 
 Explicit version:
 
 ~~~ {.nasm}
-func:
-    mov eax, [ss:esp+4]
-    mov ebx, [ds:eax]
-    add ebx, 8
-    mov [ds:eax], ebx
-    ret
+    func:
+        mov eax, [ss:esp+4]
+        mov ebx, [ds:eax]
+        add ebx, 8
+        mov [ds:eax], ebx
+        ret
 ~~~
 
 (You don't need to use `ss` for storing the stack segment selector, or `ds` for
@@ -81,10 +81,10 @@ segment registers).
 The DPL specifies the privilege levels required to execute in this segment. x86
 allows for four privilege levels (PL), 0 to 3, where PL0 is the most
 privileged. In most operating systems (eg. Linux and Windows), only PL0 and PL3
-are used (although MINIX uses all levels). The kernel should be able to do
-anything, so it "runs in PL0" (uses segments with DPL set to 0), and user-mode
-processes should run in PL3. The current privilege level (CPL) is determined by
-the segment selector in `cs`.
+are used (MINIX uses all levels). The kernel should be able to do anything, so
+it "runs in PL0" (uses segments with DPL set to 0), and user-mode processes
+should run in PL3. The current privilege level (CPL) is determined by the
+segment selector in `cs`.
 
 Since we are now executing in kernel mode (PL0), the DPL should be 0. The
 segments we need are described in the table below.
@@ -112,12 +112,13 @@ the address of a struct that specifies the start and size of the GDT:
     32-bit: start of GDT
     16-bit: size of GDT (8 bytes * num entries)
 
-It is easiest to encode this information using a "packed struct".
+It is easiest to encode this information using a ["packed
+struct"](#packing-structs).
 
 If `eax` has an address to such a struct, we can just to the following:
 
 ~~~ {.nasm}
-lgdt [eax]
+    lgdt [eax]
 ~~~
 
 It might be easier if you make this instruction available from C, the same way
@@ -153,30 +154,30 @@ Loading the segment selector registers is easy for the data registers - just
 copy the correct offsets into the registers:
 
 ~~~ {.nasm}
-mov ds, 0x10
-mov ss, 0x10
-mov es, 0x10
-; ...
+    mov ds, 0x10
+    mov ss, 0x10
+    mov es, 0x10
+    ; ...
 ~~~
 
 To load `cs` we have to do a "far jump":
 
 ~~~ {.nasm}
-    ; using previous cs
-    jmp 0x08:flush_cs
+        ; code here uses the previous cs
+        jmp 0x08:flush_cs   ; specify cs when jumping to flush_cs
 
-flush_cs:
-    ; now we've changed cs to 0x08
+    flush_cs:
+        ; now we've changed cs to 0x08
 ~~~
 
 A far jump is a jump where we explicitly specify the full 48-bit logical
-address: The segment selector to use, and the absolute address to jump to. It
-will first set `cs` to `0x08`, and then jump to `.flush_cs` using its absolute
+address: The segment selector to use and the absolute address to jump to. It
+will first set `cs` to `0x08`, and then jump to `flush_cs` using its absolute
 address.
 
 Whenever we load a new segment selector into a segment register, the processor
-reads the entire descriptor and stores it in shadow registers within the
-processor.
+reads the entire segment descriptor and stores it in shadow registers within
+the processor.
 
 ## Further Reading
 

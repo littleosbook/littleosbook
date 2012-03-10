@@ -19,7 +19,8 @@ book.html: $(CHAPTERS) $(CSS) $(HTML_TEMPLATE) $(BIB) $(CITATION)
 
 book.pdf: $(CHAPTERS) $(TEX_HEADER) $(BIB) $(CITATION)
 	pandoc --toc -H $(TEX_HEADER) --latex-engine=pdflatex --chapters \
-		   --bibliography $(BIB) --csl $(CITATION) $(CHAPTERS) -o $@
+		   --no-highlight --bibliography $(BIB) --csl $(CITATION) \
+		   $(CHAPTERS) -o $@
 
 ff: book.html
 	firefox book.html

@@ -1,6 +1,6 @@
 # User Mode
 
-User mode is now almost within our reach. There's just a few more steps
+User mode is now almost within our reach. There are just a few more steps
 required. They don't seem too much work on paper, but they can take quite a few
 hours to get right in code and design.
 
@@ -48,13 +48,15 @@ privilege level (CPL) is to execute an `iret` or `lret` instruction - interrupt
 return or long return, respectively.
 
 To enter user mode, we set up the stack as if the processor had raised an
-inter-level interrupt. The stack should look like this:
+inter-privilege level interrupt. The stack should look like this:
 
+~~~
     [esp + 16]  ss      ; the stack segment selector we want for user mode
     [esp + 12]  esp     ; the user mode stack pointer
     [esp +  8]  eflags  ; the control flags we want to use in user mode
     [esp +  4]  cs      ; the code segment selector
     [esp +  0]  eip     ; the instruction pointer of user mode code to execute
+~~~
 
 (source: The Intel manual [@intel3a], section 6.2.1, figure 6-4)
 
@@ -88,8 +90,10 @@ chapter](#creating-and-loading-the-gdt), the lowest two bits of a segment
 selector is the RPL - the Requested Privilege Level. When we execute the `iret` we
 want to enter PL3, so the RPL of `cs` and `ss` should be 3.
 
+~~~
     cs = 0x18 | 0x3
     ss = 0x20 | 0x3
+~~~
 
 `ds` - and the other data segment registers - should be set to the same segment
 selector as `ss`. They can be set the ordinary way, with `mov`.
@@ -108,28 +112,27 @@ If we implement an ELF parser, we can compile the user mode programs into ELF
 binaries as well. We leave this as an exercise for the reader.
 
 One thing we can do to make it easier to develop user mode programs is to allow
-them to be written in C but still compile them to flat binaries. In C the
+them to be written in C, but still compile them to flat binaries. In C the
 layout of the generated code is more unpredictable and the entry point
-(`main()`) might not be at offset 0.
-
-One way to work around this is to add a few assembler lines placed at offset 0
-which calls `main()`.
+(`main()`) might not be at offset 0. One way to work around this is to add a
+few assembler lines placed at offset 0 which calls `main()`.
 
 Assembler code (`start.s`):
 
 ~~~ {.nasm}
-extern main
+    extern main
 
-section .text
-    ; push argv
-    ; push argc
-    call main
-    ; main has returned, eax is return value
-    jmp  $    ; loop forever
+    section .text
+        ; push argv
+        ; push argc
+        call main
+        ; main has returned, eax is return value
+        jmp  $    ; loop forever
 ~~~
 
 Linker script (`link.ld`) to place `start.o` first:
 
+~~~
     OUTPUT_FORMAT("binary")    /* output flat binary */
 
     SECTIONS
@@ -152,6 +155,7 @@ Linker script (`link.ld`) to place `start.o` first:
             *(.rodata*)
         }
     }
+~~~
 
 Note: `*(.text)` will not include the `.text` section of `start.o` again. See
 [@ldcmdlang] for more details.
@@ -162,17 +166,21 @@ map in for the kernel. (`.rodata` will be mapped in as writeable, though.)
 
 When we compile user programs we want the usual `CFLAGS`:
 
+~~~
     -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles
     -nodefaultlibs
+~~~
 
 And these `LDFLAGS`:
 
+~~~
     -T link.ld -melf_i386  # emulate 32 bits ELF, the binary output is specified in the linker script
+~~~
 
 ### A C Library
 
 It might now be interesting to start thinking about writing a short libc for
-your programs. Some of the functionality require [system calls](#system-calls)
+your programs. Some of the functionality requires [system calls](#system-calls)
 to work, but some, such as the `string.h` functions, does not.
 
 ## Further Reading

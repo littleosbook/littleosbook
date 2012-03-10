@@ -9,12 +9,12 @@ determines access rights and how the memory should be cached.
 Paging is the most common technique used in x86 to enable virtual memory.
 Virtual memory means that each process will get the impression that the
 available memory range is `0x00000000` - `0xFFFFFFFF` even though the actual
-size of the memory is way less. It also means that when a process addresses a
-byte of memory, they will use a virtual (linear) address instead of physical
-one. The code in the user process won't notice any difference (except for
-execution delays...). The linear address will then get translated to a physical
-address by the MMU and the page table. If the virtual address isn't mapped to a
-physical address, the CPU will raise a page fault interrupt.
+size of the memory might be much less. It also means that when a process
+addresses a byte of memory they will use a virtual (linear) address instead of
+physical one. The code in the user process won't notice any difference (except
+for execution delays...). The linear address will then get translated to a
+physical address by the MMU and the page table. If the virtual address isn't
+mapped to a physical address, the CPU will raise a page fault interrupt.
 
 Paging is optional, and some operating systems don't need it. But if we want
 memory access control (so that we can have processes running in different
@@ -22,9 +22,9 @@ privilege levels), paging is the neatest way to do it.
 
 ## Paging in x86
 
-x86 paging (chapter 4 in the Intel manual [@intel3a]) consists of a page
-directory (PDT) that can contain references to 1024 page tables (PT), each of
-which can point to 1024 sections of physical memory called page frames (PF);
+x86 paging (chapter 4 in the Intel manual [@intel3a]) consists of a _page
+directory_ (PDT) that can contain references to 1024 _page tables_ (PT), each of
+which can point to 1024 sections of physical memory called _page frames_ (PF);
 Each page frame is 4096 byte large. In a virtual address (linear address), the
 highest 10 bits specifies the offset of a page directory entry (PDE) in the
 current PDT, the next highest 10 bits the offset of a page table entry (PTE)
@@ -43,16 +43,16 @@ page directory and page table both fit in a page frame themselves.
 The translation of linear addresses to physical addresses is described in
 the figure below.
 
-It is also possible to use 4MB pages. A PDE then points directly to a 4MB page
-frame, which needs to be aligned on a 4MB address boundary. The address
+It is also possible to use 4 MB pages. A PDE then points directly to a 4 MB page
+frame, which needs to be aligned on a 4 MB address boundary. The address
 translation is almost the same as in the figure, with just the page table step
-removed. It is possible to mix 4MB and 4KB pages.
+removed. It is possible to mix 4 MB and 4 KB pages.
 
 ![Translating virtual addresses (linear addresses) to physical addresses.
 ](images/intel_4_2_linear_address_translation.png)
 
 The 20 bits pointing to the current PDT is stored in the `cr3` register. The
-lower 12 bits of `cr3` are used configuration.
+lower 12 bits of `cr3` are used for configuration.
 
 For more details on the paging structures, see chapter 4 in the Intel manual
 [@intel3a]. The most interesting bits are U/S, which determine what privilege
@@ -63,29 +63,29 @@ the page read-write or read-only.
 
 The simplest kind of paging is when we map each virtual address onto the same
 physical address. This can be done at compile time by, for instance, creating a
-page table where each entry points to its corresponding 4MB frame. In NASM we
-can do this with macros and commands (`%rep`, `times` and `dd`), or just
+page directory where each entry points to its corresponding 4 MB frame. In NASM
+we can do this with macros and commands (`%rep`, `times` and `dd`), or just
 ordinary assembler instructions.
 
 ### Enabling Paging
 
 You enable paging by first writing the address of a page directory to `cr3` and
-then setting bit 31 (the PG "paging-enable" bit) of `cr0` to `1`. If you want 4MB
-pages, set the PSE bit (Page Size Extensions, bit 4) of `cr4`.
+then setting bit 31 (the PG "paging-enable" bit) of `cr0` to `1`. If you want 4
+MB pages, set the PSE bit (Page Size Extensions, bit 4) of `cr4`.
 
 ~~~ {.nasm}
-; eax has the address of the page directory
-mov cr3, eax
+    ; eax has the address of the page directory
+    mov cr3, eax
 
-mov ebx, cr4        ; read current cr4
-or  ebx, 0x00000010 ; set PSE
-mov cr4, ebx        ; update cr4
+    mov ebx, cr4        ; read current cr4
+    or  ebx, 0x00000010 ; set PSE
+    mov cr4, ebx        ; update cr4
 
-mov ebx, cr0        ; read current cr0
-or  ebx, 0x80000000 ; set PG
-mov cr0, ebx        ; update cr0
+    mov ebx, cr0        ; read current cr0
+    or  ebx, 0x80000000 ; set PG
+    mov cr0, ebx        ; update cr0
 
-; now paging is enabled
+    ; now paging is enabled
 ~~~
 
 ### A Few Details
@@ -97,7 +97,7 @@ update the paging structures, such as in the chapter on [user
 mode](#user-mode).
 
 An instruction that is useful when an updating a PDT or PT is `invlpg`. It
-invalidates the TLB (Translation Lookaside Buffer) for a virtual address. This
+invalidates the TLB (_Translation Lookaside Buffer_) for a virtual address. This
 is only required when changing a PDE or PTE that was previously mapped to
 something else. If it had previously been marked as not present (bit 0 was set
 to 0), doing `invlpg` is unnecessary. Also, changing the value of `cr3` will
@@ -106,20 +106,20 @@ cause all entries in the TLB to be invalidated.
 Example:
 
 ~~~ {.nasm}
-; invalidate any TLB references to virtual address 0
-invlpg [0]
+    ; invalidate any TLB references to virtual address 0
+    invlpg [0]
 ~~~
 
 ## Higher-half Kernel
 
 When GRUB loads our kernel into memory, it places the kernel at the physical
-memory starting at 1MB. With identity mapping, this is also the virtual address
-of the kernel.
+memory starting at 1 MB. With identity mapping, this is also the virtual
+address of the kernel.
 
 ### Reasons to Not Identity Map the Kernel
 
 If the kernel is placed at the beginning of the virtual address space - that
-is, the virtual address `0x00000000` to `"size of kernel"` will map to the
+is, the virtual address `0x00100000` to `"size of kernel"` will map to the
 location of the kernel in memory - there will be issues when linking the user
 mode process code. Normally, during linking, the linker assumes that the code
 will be loaded into the memory position `0x00000000`. Therefore, when resolving
@@ -135,7 +135,7 @@ very cumbersome solution for the users of the operating system.
 This also assumes that we want the kernel to be part of the user mode process'
 address space. As we will see later, this is a nice feature, since during
 system calls we don't have to change any paging structures to get access to the
-kernels code and data. The kernel pages will of course require privilege level
+kernel's code and data. The kernel pages will of course require privilege level
 0 for access, to prevent a user process from reading or writing kernel memory.
 
 ### The Virtual Address for the Kernel
@@ -145,7 +145,7 @@ for example `0xC0000000` (3 GB). The user mode process is not likely to
 be 3GB large, which is now the only way that it can conflict with the
 kernel.
 
-If the user mode process is larger than 3GB, some pages will need to be
+If the user mode process is larger than 3 GB, some pages will need to be
 swapped out by the kernel. Swapping pages will not be part of this book.
 
 ### Placing the Kernel at `0xC0100000`
@@ -155,7 +155,7 @@ thought. This is once again a linking problem.  When the linker resolves all
 absolute references in the kernel, it will assume that our kernel is loaded at
 physical memory location `0x00100000`, not `0x00000000`, since we tell it so in
 our linker script (see the section on [linking the
-kernel](#linking-the-kernel).  However, we want the jumps to be resolved to
+kernel](#linking-the-kernel)). However, we want the jumps to be resolved to
 `0xC0100000` as base, since otherwise a kernel jump will jump straight into the
 user mode process code (remember that the user mode process is loaded at
 virtual memory `0x00000000` and up).
@@ -179,34 +179,36 @@ the ELF format [@wiki:elf].
 
 We can modify the [first linker script](#linking-the-kernel) to implement this:
 
+~~~
     ENTRY(loader)           /* the name of the entry symbol */
 
     . = 0xC0100000          /* the code should be relocated to 3GB + 1MB */
 
-    /* align at 4KB and load at 1MB */
+    /* align at 4 KB and load at 1 MB */
     .text ALIGN (0x1000) : AT(ADDR(.text)-0xC0000000)
     {
         *(.text)            /* all text sections from all files */
     }
 
-    /* align at 4KB and load at 1MB + . */
+    /* align at 4 KB and load at 1 MB + . */
     .rodata ALIGN (0x1000) : AT(ADDR(.text)-0xC0000000)
     {
         *(.rodata*)         /* all read-only data sections from all files */
     }
 
-    /* align at 4KB and load at 1MB + . */
+    /* align at 4 KB and load at 1 MB + . */
     .data ALIGN (0x1000) : AT(ADDR(.text)-0xC0000000)
     {
         *(.data)            /* all data sections from all files */
     }
 
-    /* align at 4KB and load at 1MB + . */
+    /* align at 4 KB and load at 1 MB + . */
     .bss ALIGN (0x1000) : AT(ADDR(.text)-0xC0000000)
     {
         *(COMMON)           /* all COMMON sections from all files */
         *(.bss)             /* all bss sections from all files */
     }
+~~~
 
 ### Entering the Higher Half
 
@@ -221,33 +223,33 @@ that maps to the first 4 MB of the physical memory and finally an entry for
 `0xC0100000` that maps to `0x0010000`. If we skip the identity mapping for the
 first 4 MB, the CPU would generate a page fault immediately after paging was
 enabled when trying to fetch the next instruction from memory. After the table
-has been created, an indirect jump can be done to a label, to make `eip` point
+has been created, an absolute jump can be done to a label to make `eip` point
 to a high address:
 
 ~~~ {.nasm}
-; assembly code executing at around 0x00100000
-; enable paging for both actual location of kernel
-; and its higher-half virtual location
+    ; assembly code executing at around 0x00100000
+    ; enable paging for both actual location of kernel
+    ; and its higher-half virtual location
 
-lea ebx, [higher_half] ; load the address of the label in ebx
-jmp ebx                ; jump to the label
+    lea ebx, [higher_half] ; load the address of the label in ebx
+    jmp ebx                ; jump to the label
 
-higher_half:
-    ; code here executes in the higher half kernel
-    ; eip is larger than 0xC0000000
-    ; can continue kernel initialisation, calling C code, etc.
+    higher_half:
+        ; code here executes in the higher half kernel
+        ; eip is larger than 0xC0000000
+        ; can continue kernel initialisation, calling C code, etc.
 ~~~
 
 Now `eip` will point to a memory location somewhere right after `0xC0100000` -
 all the code can now execute as if it were at `0xC0100000`, the higher-half.
-The entry mapping the first 4MB of virtual memory to the first 4MB of
+The entry mapping the first 4 MB of virtual memory to the first 4 MB of
 physical can be removed from the page table, and its corresponding entry in
 the TLB invalidated with `invlpg [0]`.
 
 ### Running in the Higher Half
 
 There are a few details we must deal with when using a higher-half kernel. We
-must now take care when using memory mapped I/O that uses specific memory
+must now take care when using memory-mapped I/O that uses specific memory
 locations. For example, the frame buffer is located at `0x000B8000`, but since
 there is no entry in the page table for the address `0x000B8000` any longer,
 the address `0xC00B8000` must be used, since the virtual address `0xC0000000`
@@ -258,11 +260,11 @@ changed to reflect the new virtual addresses as well.
 
 Mapping entire 4 MB pages for the kernel is very simple, but wastes quite some
 memory (unless you have a really big kernel). Creating a higher-half kernel
-mapped in as 4KB pages is doable, but somewhat trickier. The page directory and
-one page table can be in `.data` (assuming your kernel is smaller than 4 MB),
-but you need to configure the mappings at runtime. The size of the kernel can
-be determined by exporting labels from the linker script [@ldcmdlang], which
-we'll need to do later anyway when writing the [page frame
+mapped in as 4 KB pages is doable, but somewhat trickier. The page directory
+and one page table (for instance) can be in `.data` (assuming your kernel is
+smaller than 4 MB), but you need to configure the mappings at runtime. The size
+of the kernel can be determined by exporting labels from the linker script
+[@ldcmdlang], which we'll need to do later anyway when writing the [page frame
 allocator](#how-much-memory-is-there).
 
 ## Virtual Memory Through Paging
@@ -273,7 +275,7 @@ read-write, only for PL0 etc. Second, it creates the illusion of contiguous
 memory. User mode processes, and the kernel, can access memory as if it
 were contiguous, and the contiguous memory can be extended without the need
 to move stuff around. Also, we can allow the user mode programs to access
-all memory below 3GB, but unless they actually use it, we don't have to
+all memory below 3 GB, but unless they actually use it, we don't have to
 assign page frames to the pages. This allows processes to have code located
 near `0x00000000` and the stack at just below `0xC0000000`, and still not
 require more than two actual pages.
