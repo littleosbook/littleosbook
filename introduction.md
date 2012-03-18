@@ -5,7 +5,7 @@
 This book is a practical guide to writing your own x86 operating system. It is
 designed to not give too much away with samples and code excerpts, but still
 give enough help with the technical details. We've tried to collect parts of
-the vast (and often excellent) expanse of material and tutorials out there, on
+the vast (and often excellent) expanse of material and tutorials available, on
 the web and otherwise, and add our own insights into the problems we
 encountered and struggled with.
 
@@ -18,15 +18,15 @@ The starting chapters are quite detailed and explicit, to quickly get you into
 coding. Later chapters give more of an outline of what is needed, as more and
 more of the implementation and design becomes up to the reader, who should now
 be more familiar with the world of kernel development. At the end of some
-chapters there are links for further reading, which might be interesting and
+chapters are links for further reading, which might be interesting and
 give a deeper understanding of the topics covered.
 
 ## The Reader
 
 The reader of this book should be comfortable with UNIX/Linux, systems
-programming and the C language. This book might of course also be a way to get
+programming and the C language. This book course be a way to get
 started learning those things, but it will be tougher going, especially where
-we implicitly make use of these building blocks. Search engines and other
+we implicitly make use of these building blocs. Search engines and other
 tutorials are often helpful if you get stuck.
 
 ## Credits, Thanks and Acknowledgements
@@ -47,7 +47,7 @@ request. We'll happily incorporate anything that makes this book better.
 
 ## License
 
-All content is under the [Creative Commons Attribution Non Commercial Share
-Alike 3.0 license](http://creativecommons.org/licenses/by-nc-sa/3.0/us/). The
+All content is under the Creative Commons Attribution Non Commercial Share
+Alike 3.0 license, <http://creativecommons.org/licenses/by-nc-sa/3.0/us/>. The
 code samples are in the public domain - use them however you want. References
 to this book are always received with warmth.
