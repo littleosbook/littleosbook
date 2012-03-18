@@ -12,14 +12,15 @@ programs execute.  It is less privileged than the kernel, and will prevent
 badly written user programs from messing with other programs or the kernel.
 Badly written kernels are free to mess up what they want.
 
-There's quite a way to go until we get to user mode, but here follows a
-quick-and-dirty start.
+There's quite a way to go until the OS created in this book can execute
+programs in user mode, but this chapter will show how to easily execute a small
+program in kernel mode.
 
-## Loading a Program
+## Loading an External Program
 
-Where do we get the application from? Somehow we need to load the code we want
-to execute into memory. More feature-complete operating systems usually have
-drivers and file systems that enable them load the software from a CD-ROM
+Where do we get the external program from? Somehow we need to load the code we
+want to execute into memory. More feature-complete operating systems usually
+have drivers and file systems that enable them load the software from a CD-ROM
 drive, a hard disk or other persistent media.
 
 Instead of creating all these drivers and file systems, we will use a
@@ -27,8 +28,8 @@ feature in GRUB called modules to load our program.
 
 ### GRUB Modules
 
-GRUB can load arbitrary files into memory from the ISO image, and these files are
-usually referred to as modules. To make GRUB load a module, edit the file
+GRUB can load arbitrary files into memory from the ISO image, and these files
+are usually referred to as _modules_. To make GRUB load a module, edit the file
 `iso/boot/grub/menu.lst` and add the following line at the end of the file:
 
 ~~~
@@ -41,10 +42,11 @@ Now create the folder `iso/modules`:
     mkdir -p iso/modules
 ~~~
 
-Later in this chapter, the application "program" will be created. We must also
-update the code that calls `kmain` to pass information to `kmain` about where
-it can find the modules. We also want to tell GRUB that it should align all the
-modules on page boundaries when loading them (see the chapter about
+Later in this chapter, the application `program` will be created.
+
+The code that calls `kmain` must be updated to pass information to `kmain`
+about where it can find the modules. We also want to tell GRUB that it should
+align all the modules on page boundaries when loading them (see the chapter
 ["Paging"](#paging) for details about page alignment).
 
 To instruct GRUB how to load our modules, the "multiboot header" - the first
@@ -114,10 +116,10 @@ which describes the structure.
 
 The pointer passed to `kmain` from the `ebx` register can now be casted to
 `multiboot_info_t` pointer. The address of the first module is in the field
-`mods_addr`:
+`mods_addr`. The following code shows an example:
 
 ~~~ {.c}
-    int kmain(..., unsigned int ebx)
+    int kmain(/* additional arguments */, unsigned int ebx)
     {
         multiboot_info_t *mbinfo = (multiboot_info_t *) ebx;
         unsigned int address_of_module = mbinfo->mods_addr;
@@ -125,16 +127,17 @@ The pointer passed to `kmain` from the `ebx` register can now be casted to
 ~~~
 
 However, before just blindly following the pointer, you should check that the
-module got loaded correctly. This can be done by checking the `flags` field of
-the `multiboot_info_t` structure. You should also check the field `mods_count`
-to make sure it's exactly 1. For more details about the multiboot structure,
-see [@multiboot].
+module got loaded correctly by GRUB. This can be done by checking the `flags`
+field of the `multiboot_info_t` structure. You should also check the field
+`mods_count` to make sure it is exactly 1. For more details about the multiboot
+structure, see [@multiboot].
 
 ### Jumping to the Code
-What we'd like to do now is just jump to the address of the GRUB-loaded module.
+The only thing left to execute the external program is to jump to the code
+loaded by GRUB.
 Since it is easier to parse the multiboot structure in C, calling the code from
-C is more convenient, but it can of course be done with `jmp` (or `call`) in
-assembly as well. The C code could look like this:
+C is more convenient (it can of course be done with `jmp` or `call` in
+assembly as well). The C code could look like the following:
 
 ~~~ {.c}
     typedef void (*call_module_t)(void);

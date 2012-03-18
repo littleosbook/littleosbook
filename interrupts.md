@@ -23,23 +23,23 @@ table. There are three different kinds of handlers for interrupts:
 The task handler uses Intel specific functionality, so they won't be covered
 here (see the Intel manual [@intel3a], chapter 6, for more info). The only
 difference between an interrupt handler and a trap handler is that the
-interrupt handler disables interrupts, that is, you can't get an interrupt
+interrupt handler disables interrupts, which mean you can't get an interrupt
 while at the same time handling an interrupt. In this book, we will use trap
 handlers and disable interrupts manually when we need to.
 
 ## Creating an Entry in the IDT
 An entry in the IDT for an interrupt handler consists of 64 bits.
-The highest 32 bits are:
+The highest 32 bits are shown in the figure below:
 
     Bit:     | 31              16 | 15 | 14 13 | 12 | 11 | 10 9 8 | 7 6 5 | 4 3 2 1 0 |
     Content: | offset high        | P  | DPL   | 0  | D  | 1  1 0 | 0 0 0 | reserved  |
 
-and the lowest 32 bits are:
+The lowest 32 bits are presented in the following figure:
 
     Bit:     | 31              16 | 15              0 |
     Content: | segment selector   | offset low        |
 
-The contents are:
+A description for each name can be found in the table below:
 
              Name Description
 ----------------- ------------
@@ -61,44 +61,49 @@ segment selector as the kernel, the following two bytes would be used:
     0x0008BEEF
 ~~~
 
-If the IDT then is represented as an `unsigned integer idt[512];` then to
-register this as the handler for interrupt 0 (divide error), you would write:
+If the IDT is represented as an `unsigned integer idt[512]`, then to register
+the above example as an handler for interrupt 0 (divide-by-zero), the following
+code would be used:
 
 ~~~ {.c}
     idt[0] = 0xDEAD8E00
     idt[1] = 0x0008BEEF
 ~~~
 
-As written in the chapter [getting to C](#getting-to-c), we recommend that you
+As written in the chapter ["Getting to C"](#getting-to-c), we recommend that you
 instead of using bytes (or unsigned integers) use packed structures to make the
 code more readable.
 
-## Creating a Generic Interrupt Handler
+## Handling an Interrupt
 When the interrupt occurs the CPU will push information about the interrupt on
 the stack, then look up the appropriate interrupt hander in the IDT and jump to
-it. Once the interrupt handler is done, it uses the `iret` instruction to
-return. `iret` pops the information from the stack, restores `eflags` and jumps
-to `cs:eip`.
-
-The stack at the time of the interrupt will look like this:
+it. The stack at the time of the interrupt will look like the following:
 
 ~~~
-    [esp + 12] EFLAGS
-    [esp + 8]  CS
-    [esp + 4]  EIP
-    [esp]      Error code?
+    [esp + 12] eflags
+    [esp + 8]  cs
+    [esp + 4]  eip
+    [esp]      error code?
 ~~~
 
 The reason for the question mark behind error code is that not all interrupts
 create an error code. The CPU interrupts that put an error code on the stack
 are 8, 10, 11, 12, 13, 14 and 17.
 
-The interrupt handler has to be written in assembly as all registers have to be
-pushed on the stack, because the code that was interrupted will assume that the
-states of it's registers haven't changed. Writing all the logic of the
-interrupt handler in assembly will be tiresome, so creating an assembly handler
-that saves the registers, calls a C function, restores the registers and
-returns is a good idea!
+Once the interrupt handler is done, it uses the `iret` instruction to
+return. The instruction `iret` expects the stack to be like when the
+interrupt occurred (see the figure above). Therefore, any values pushed onto the
+stack by the interrupt handler must be popped.
+Before returning, `iret` restores `eflags` by popping the value from the stack
+and then finally jumps to `cs:eip` as specified by the values on the stack.
+
+The interrupt handler has to be written in assembly, since all registers that
+the interrupt handlers uses must be pushed on the stack. This is because the
+code that was interrupted has no idea it got interrupted and will therefore
+expect that its registers stays the same.
+Writing all the logic of the interrupt handler in assembly will be tiresome.
+Therefore creating an assembly handler that saves the registers, calls a C
+function, restores the registers and finally executes `iret` is a good idea!
 
 The C handler should get the state of the registers, the state of the stack and
 the number of the interrupt. The following definitions can for example be used:
@@ -124,11 +129,15 @@ the number of the interrupt. The following definitions can for example be used:
     void interrupt_handler(struct cpu_state cpu, unsigned int interrupt, struct stack_state stack);
 ~~~
 
-Unfortunately, the CPU does _not_ push the interrupt number on the stack. Since
-writing one version for each interrupt is tedious it's better to use the macro
-functionality of NASM (see [@nasm:macros] for more details). Since not all
-interrupts produce an error code the error code 0 will be used for interrupts
-without error code.
+## Creating a Generic Interrupt Handler
+The CPU does _not_ push the interrupt number on the stack, making it a little
+tricky to write a generic interrupt handler. This section will use macros to
+show how it can be done.
+Since writing one version for each interrupt is tedious it's better to use the
+macro functionality of NASM (see [@nasm:macros] for more details). Since not
+all interrupts produce an error code, the value 0 will be added as error code
+for interrupts without error code. The following code show an example of how
+this can be done:
 
 ~~~ {.nasm}
     %macro no_error_code_interrupt_handler %1
@@ -188,7 +197,7 @@ The `common_interrupt_handler` does the following:
 - Push the registers onto the stack
 - Call the C function `interrupt_handler`
 - Pop the registers from the stack
-- Add 8 to `esp` (due to the error code and the interrupt number)
+- Add 8 to `esp` (because of the error code and the interrupt number pushed earlier)
 - Execute `iret` to return to the interrupted code
 
 Since the macros declares global labels the addresses of the interrupt handlers
@@ -220,7 +229,7 @@ hardware to interrupts. The reasons for configuring the PIC are:
   interrupts, which conflicts with the CPU interrupts, so the PIC interrupts
   must be remapped to another interval.
 - Select which interrupts to receive. You probably don't want to receive
-  interrupts from all hardware since you don't have code that handles these
+  interrupts from all devices since you don't have code that handles these
   interrupts anyway.
 - Set up the correct mode for the PIC.
 
@@ -229,7 +238,7 @@ hardware were added to the computer, 8 interrupts were too little. The solution
 chosen was to chain on another PIC (PIC 2) on the first PIC (see interrupt 2 on
 PIC 1).
 
-The hardware interrupts are:
+The hardware interrupts are shown in the table below:
 
  PIC 1 Hardware     PIC 2 Hardware
 ------ ---------   ------ ---------
@@ -242,16 +251,17 @@ The hardware interrupts are:
      6 Floppy disk     14 IDE Bus
      7 LPT 1           15 IDE Bus
 
-A great tutorial for configuring the PIC can be found at [@acm].
+A great tutorial for configuring the PIC can be found at [@acm], so we won't
+repeat that information here.
 
 Every interrupt from the PIC has to be acknowledged - that is, sending a
 message to the PIC confirming that the interrupt has been handled. If this
 isn't done, the PIC won't generate any more interrupts.
 
-You acknowledge a PIC interrupt by sending the byte `0x20` to the PIC that
-raised the interrupt. Sending the acknowledgement to the PIC that did _not_
-raise the interrupt doesn't do anything. Implementing a `pic_acknowledge`
-function is straightforward:
+Acknowledging a PIC interrupt is done by sending the byte `0x20` to the PIC
+that raised the interrupt. Sending the acknowledgement to the PIC that did
+_not_ raise the interrupt doesn't do anything. Implementing a `pic_acknowledge`
+function can thus be done as follows:
 
 ~~~ {.c}
     #include "io.h"
@@ -273,13 +283,11 @@ function is straightforward:
 
 ## Reading Input from the Keyboard
 
-The keyboard generates interrupt 1 from the PIC, so if you remapped the PIC's
-interrupts to start at number 32, the interrupt number for the keyboard will be
-33.
-
-The keyboard does not generate ASCII characters, but scan codes. A scan code
-represents a button - both presses and releases. The scan code representing the
-just pressed button can be read from the keyboard's data I/O port:
+The keyboard does not generate ASCII characters, it generates scan codes. A
+scan code represents a button - both presses and releases. The scan code
+representing the just pressed button can be read from the keyboard's data I/O
+port that has address `0x60`. How this can be done is shown in the following
+example:
 
 ~~~ {.c}
     #include "io.h"
@@ -298,9 +306,9 @@ just pressed button can be read from the keyboard's data I/O port:
 ~~~
 
 The next step is to write a function that translates a scan code to the
-corresponding ASCII character. If you want to map the scan codes to the ASCII
+corresponding ASCII character. If you want to map the scan codes to ASCII
 characters as is done on an American keyboard, [@scancodes] shows how the scan
-codes and keyboard buttons correlates.
+codes and keyboard buttons are mapped.
 
 Remember, since the keyboard interrupt is raised by the PIC, you must call
 `pic_acknowledge` at the end of the keyboard interrupt handler. Also, the
