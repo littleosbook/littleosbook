@@ -18,15 +18,15 @@ called the _scheduler_.
 ## Creating New Processes
 Creating new processes is usually done with two different system calls: `fork`
 and `exec`. `fork` creates an exact copy of the currently running process,
-while `exec` replaces the current process with another, often specified by a
-path to the programs location in the file system. Of these two, we recommend
+while `exec` replaces the current process with one that is specified by a
+path to the location of a program in the file system. Of these two, we recommend
 that you start implementing `exec`, since this system call will do almost
-exactly the same steps as described in ["Setting up for user
+exactly the same steps as described in the section ["Setting up for user
 mode"](#setting-up-for-user-mode).
 
 ## Cooperative Scheduling with Yielding
 The easiest way to achieve the rapid switching between processes is if the
-processes themselves are responsible for the switching. That is, the processes
+processes themselves are responsible for the switching. The processes
 runs for a while and then tells the OS (via a syscall) that it can now switch
 to another process. Giving up the control of CPU to another process is called
 _yielding_ and when the processes themselves are responsible for the
@@ -39,13 +39,13 @@ process. When changing to a new process, all the registers must be updated with
 the saved values.
 
 In order to implement scheduling, you must keep a list of which processes are
-running. The system call "yield" should then run the next process in the list
+running. The system call `yield` should then run the next process in the list
 and put the current one last (other schemes are possible, but this is a simple
 one).
 
-The transfer of control to the new process is done via `iret` in exactly the
-same way as explained in the section
-["Entering user mode"](#entering-user-mode).
+The transfer of control to the new process is done via the `iret` assembly
+instruction in exactly the same way as explained in the section ["Entering user
+mode"](#entering-user-mode).
 
 We __strongly__ recommend that you start to implement support for multiple
 processes by implementing cooperative scheduling. We further recommend that you
@@ -59,7 +59,8 @@ process the OS can switch processes automatically after a short period of time.
 The OS can set up the _programmable interval timer_ (PIT) to raise an interrupt
 after a short period of time, for example 20 ms. In the interrupt handler for
 the PIT interrupt, the OS will change the running process to a new one. This
-way, the processes themselves don't need to worry about scheduling.
+way, the processes themselves don't need to worry about scheduling. This kind
+of scheduling is called _preemptive scheduling_.
 
 ### Programmable Interval Timer
 To be able to do preemptive scheduling, the PIT must first be configured to
@@ -81,24 +82,24 @@ This results in the configuration byte `00110110`.
 Setting the interval for how often interrupts are to be raised is done via a
 _divider_, the same way as for the serial port. Instead of sending the PIT a
 value (e.g. in milliseconds) that says how often an interrupt should be raised,
-you send the _divider_. The PIT operates at 1193182 Hz as default. To change
+you send the divider. The PIT operates at 1193182 Hz as default. To change
 this, you for example send the divider 10. The PIT will then run at `1193182 /
 10 = 119318` Hz. The divider can only be 16 bits, so it is only possible to
 configure the timer's frequency between 1193182 Hz and `1193182 / 65535 = 18.2`
 Hz. We recommend that you create a function that takes an interval in
 milliseconds and converts it to the correct divider.
 
-The divider is then sent to channel 0 data I/O port of the PIT, but since you
-can only send 1 byte at a time, you must first send the lowest 8 bits, then the
-highest 8 bits of the divider. The channel 0 data I/O port is at `0x40`. See
-[@osdev:pit] for more details.
+The divider is then sent to the channel 0 data I/O port of the PIT, but since you
+can only send one byte at a time, you must first send the lowest 8 bits, then the
+highest 8 bits of the divider. The channel 0 data I/O port is at `0x40`. Again,
+see [@osdev:pit] for more details.
 
 ### Separate Kernel Stacks for Processes
 If all processes uses the same kernel stack (the stack exposed by the TSS),
 there will be trouble if a process is interrupted while still in kernel mode.
 The process that is being switched to will now use the same kernel stack, and
-will overwrite what the previous have written on the stack (remember that TSS
-data structure points to the _beginning_ of the stack).
+will overwrite what the previous process have written on the stack (remember
+that TSS data structure points to the _beginning_ of the stack).
 
 To solve this problem, every process should have it's own kernel stack, the
 same way that each process have their own user mode stack. When switching
@@ -116,7 +117,7 @@ Interrupting a process in kernel mode is a little bit different than
 interrupting a process in user mode, due to the way the CPU sets up the stack
 at interrupts. If a privilege level change occurs (the process was interrupted
 in user mode), then the CPU will push the value of the process `ss` and `esp`
-register on the stack. If no privilege level change occurs (the process was
+register on the stack. If _no_ privilege level change occurs (the process was
 interrupted in kernel mode), then the CPU won't push the `esp` register on the
 stack. Furthermore, if there is no privilege level change, the CPU won't change
 stack to the one defined it the TSS.

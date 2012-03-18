@@ -2,7 +2,7 @@
 
 Now that we have virtual memory with paging set up we need to somehow allocate
 some of the available memory to use for the applications we want to run. How do
-we know what memory is free? That is the role of a page frame allocator.
+we know what memory is free? That is the role of the page frame allocator.
 
 ## Managing Available Memory
 
@@ -12,7 +12,8 @@ First we need to know how much memory the computer we're running on has.
 The easiest way to do this is to read it from the multiboot [@multiboot]
 structure sent to us by GRUB. GRUB collects the information we need about
 the memory - what is reserved, I/O mapped, read-only etc. We must also make
-sure that we don't mark the part of memory used by the kernel as free. One way
+sure that we don't mark the part of memory used by the kernel as free (since
+GRUB doesn't mark this memory as reserved). One way
 to do this is to export labels at the beginning and end of the kernel binary
 from the linker script.
 
@@ -88,9 +89,9 @@ take the address of the function:
 ~~~
 
 If you use GRUB modules you need to make sure the memory they use is marked as
-"in use" as well.
+reserved as well.
 
-Note that not all available memory needs to be contiguous. In the first 1 MB
+Note that the available memory does not need to be contiguous. In the first 1 MB
 there are several I/O-mapped memory sections, as well as memory used by GRUB
 and the BIOS. Other parts of the memory might be similarly unavailable.
 
@@ -120,7 +121,7 @@ We need to map the page frame into virtual memory, by updating the PDT and/or
 PT used by the kernel. What if all available page tables are full? Then we
 can't map the page frame into memory, because we'd need a new page table -
 which takes up an entire page frame - and to write to this page frame we'd need
-to map it in...
+to map it in... Somehow we must break this recursion.
 
 One solution is to reserve part of the first page table used by the kernel (or
 some other higher-half page table) for temporarily mapping in page frames so
@@ -137,9 +138,7 @@ will be:
 
 After we've temporarily mapped in the page frame we want to use as a page
 table, and set it up to map in our first page frame, we can add it to the
-paging directory, and remove the temporary mapping. (This leads to the quite
-nice property that no paging tables need to be mapped in unless we need to
-edit them).
+paging directory, and remove the temporary mapping.
 
 ## A Kernel Heap
 
@@ -152,7 +151,7 @@ inspiration from. The only real modifications we need to do is to remove calls
 to `sbrk`/`brk`,and directly ask the page frame allocator for the page frames,
 and the paging system to map them in.
 
-This can be done quick and dirty. A real implementation should also give back
+A correct implementation should also give back
 page frames to the page frame allocator on `free`, whenever sufficiently large
 blocks are freed.
 

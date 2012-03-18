@@ -1,25 +1,25 @@
 # File Systems
 
-We are not required to have file systems in our operating system, but it is
-quite convenient, and it often plays a central part in many operations of
-several existing OS's, especially UNIX-like systems. Before we start the
+We are not required to have file systems in our operating system, but it is a
+very usable abstraction, and it often plays a central part in many operations
+of several existing OS's, especially UNIX-like systems. Before we start the
 process of supporting multiple processes and system calls we might want to
 consider implementing a simple file system.
 
 ## Why a File System?
 
 How do we specify what programs to run in our OS? Which is the first program to
-run? How do programs output data? Read input?
+run? How do programs output data or read input?
 
 In UNIX-like systems, with their almost-everything-is-a-file convention, these
 problems are solved by the file systems. It might also be interesting to read a
 bit about the Plan 9 project, which takes this idea one step further (see
-[further reading](#further-reading-6) below).
+the section ["Further Reading"](#further-reading-6) below).
 
-## A Simple File System
+## A Simple Read-Only File System
 
 The most simple file system possible might be what we already have - one
-"file", existing only in RAM, loaded by GRUB before the kernel starts. When our
+file, existing only in RAM, loaded by GRUB before the kernel starts. When our
 kernel and operating system grows, this is probably too limiting.
 
 A next step could be to add structure to this GRUB-loaded module. With a
@@ -37,16 +37,13 @@ read from our kernel. All objects will also have a fixed size (except for the
 last one, which can grow); It might be difficult to add new or modify existing
 files. We can make the file system read-only.
 
-`mmap` is a handy system call that makes writing the "file-system-in-a-file"
-easier.
-
 ## Inodes and Writable File Systems
 
 When we decide that we want a more complex - and realistic - file system, we
-might want to look into the concept of inodes. See [further
-reading](#further-reading-6).
+might want to look into the concept of an _inode_. See the section ["Further
+Reading](#further-reading-6) for recommended reading.
 
-## A Virtual File System and devfs
+## A Virtual File System
 
 What abstraction should we use for reading and writing to devices such as the
 screen and the keyboard?
@@ -55,12 +52,14 @@ With a virtual file system (VFS) we create an abstraction on top of any real
 file systems we might have. The VFS mainly supplies the path system and file
 hierarchy, and delegates operations on files to the underlying file
 systems. The original paper on VFS is succinct, concrete, and well worth a
-read. See [further reading](#further-reading-6).
+read. See the section ["Further Reading"](#further-reading-6) for a reference.
 
-With a VFS we can mount a special file system on `/dev`, which handles all
-devices such as keyboards and the screen. Or we can take the traditional UNIX
-approach, with major/minor device numbers and `mknod` to create special files
-for our devices.
+With a VFS we could mount a special file system on `/dev`, which handles all
+devices such as keyboards and the screen. However, on could also take the
+traditional UNIX approach, with major/minor device numbers and `mknod` to
+create special files for our devices. Which approach you think is the most
+appropriate is up to you, there is no right or wrong when building abstraction
+layers (although some abstraction layers turns out way more useful than others).
 
 ## Further Reading
 
