@@ -1,15 +1,15 @@
 # User Mode
 
-User mode is now almost within our reach. There are just a few more steps
-required. They don't seem too much work on paper, but they can take quite a few
-hours to get right in code and design.
+User mode is now almost within our reach, there are just a few more steps
+required to get there. They don't seem too much work on paper, but they can
+take quite a few hours to get right in code and design.
 
 ## Segments for User Mode
 
 To enable user mode we need to add two more segments to the GDT. They are very
 similar to the kernel segments we added when we [set up the
 GDT](#the-global-descriptor-table-gdt) in the [chapter about
-segmentation](#segmentation).
+segmentation](#segmentation):
 
   Index   Offset   Name                 Address range             Type   DPL
 -------  -------   -------------------  ------------------------- -----  ----
@@ -19,7 +19,7 @@ segmentation](#segmentation).
 Table: The segment descriptors needed for user mode.
 
 The difference is the DPL, which now allows code to execute in PL3. The
-segments can still be used to address the entire address space, so just using
+segments can still be used to address the entire address space, just using
 these segments for user mode code will not protect the kernel. For that we need
 paging.
 
@@ -28,18 +28,19 @@ paging.
 There are a few things every user mode process needs:
 
 - Page frames for code, data and stack. For now we can just allocate one page frame
-  for the stack, and enough page frames to fit the program.
+  for the stack, and enough page frames to fit the program's code.
 
-- We need to copy the binary from the GRUB module to the frames used for code.
+- We need to copy the binary from the GRUB module to the page frames used for
+  the program's code.
 
 - We need a page directory and page tables to map these page frames into
   memory. At least two page tables are needed, because the code and data should
   be mapped in at `0x00000000` and increasing, and the stack should start just
-  below the kernel, at `0xBFFFFFFB`, growing to lower addresses. Make sure the
-  U/S flag is set to allow PL3 access.
+  below the kernel, at `0xBFFFFFFB`, growing towards lower addresses. Make sure
+  the U/S flag is set to allow PL3 access.
 
-It might be convenient to store these in a struct of some kind, dynamically
-allocated with the kernel `malloc`.
+It might be convenient to store this information in a `struct` representing a
+process, which can be dynamically allocated with the kernel's `malloc` function.
 
 ## Entering User Mode
 
@@ -47,7 +48,7 @@ The only way to execute code with a lower privilege level than the current
 privilege level (CPL) is to execute an `iret` or `lret` instruction - interrupt
 return or long return, respectively.
 
-To enter user mode, we set up the stack as if the processor had raised an
+To enter user mode we set up the stack as if the processor had raised an
 inter-privilege level interrupt. The stack should look like the following
 figure:
 
@@ -66,38 +67,41 @@ The instruction `iret` will then read these values from the stack and fill in
 the corresponding registers. Before we execute `iret` we need to change to the
 page directory we setup for the user mode process. It is important to remember
 that to continue executing kernel code after we've switched PDT, the kernel
-needs to be mapped in. One way to accomplish this is to have a "kernel PDT",
-which maps in all kernel data at `0xC0000000` and above, and merge it with the
-user PDT (which only maps below `0xC0000000`) when we do the switch. Also,
-remember that you need to use the physical address for the page directory when
-you set `cr3`.
+needs to be mapped in. One way to accomplish this is to have a separate PDT for
+the kernel,
+which maps all data at `0xC0000000` and above, and merge it with the
+user PDT (which only maps below `0xC0000000`) when performing the switch.
+Remember that you need to use the physical address for the PDT when you set `cr3`.
 
 The register `eflags` contains a set of different flags, specified in
 section 2.3 of the Intel manual [@intel3a]. Most important for us is the
-interrupt enable (IF) flag. When in PL3 we aren't allowed to use `sti` like
-we'd normally do to enable interrupts. If interrupts are disabled when we enter
-user mode, we can't enable them when we get there. When we use `iret` to enter
-user mode it will set `eflags` for us, therefore setting the IF flag in the
-`eflags` entry on the stack will enable interrupts in user mode.
+interrupt enable (IF) flag. The assembly instruction`sti` can't be used in
+privilege level 3 to enable interrupts. If interrupts are disabled when
+entering user mode, then interrupts can't enabled once user mode is entered.
+Setting the IF flag in the `eflags` entry on the stack will enable interrupts
+in user mode, since the register `eflags` will be to the `eflags` value on the
+stack by assembly instruction `iret`.
 
 For now, we should have interrupts disabled, as it requires a little more
-twiddling to get inter-privilege level interrupts to work properly (see the
+work to get inter-privilege level interrupts to work properly (see the
 section ["System calls"](#system-calls).
 
-The `eip` should point to the entry point for the user code - `0x00000000` in
-our case. `esp` should be where the stack should start - `0xBFFFFFFB`
-(`0xC0000000 - 4`).
+The value `eip` on the stack should point to the entry point for the user code
+- `0x00000000` in our case. The value `esp` on the stack should be where the
+stack starts - `0xBFFFFFFB` (`0xC0000000 - 4`).
 
-`cs` and `ss` should be the segment selectors for the user code and user data
-segments, respectively. As we saw in the [segmentation
+The values `cs` and `ss` on the stack should be the segment selectors for the
+user code and user data segments, respectively. As we saw in the [segmentation
 chapter](#creating-and-loading-the-gdt), the lowest two bits of a segment
-selector is the RPL - the Requested Privilege Level. When we execute `iret` we
-want to enter PL3, so the RPL of `cs` and `ss` should be 3. The following code
-shows an example:
+selector is the RPL - the Requested Privilege Level. When using `iret` to enter
+PL3, the RPL of `cs` and `ss` should be `0x3`. The following code shows an
+example:
 
 ~~~ {.nasm}
-    mov cs, 0x18 | 0x3
-    mov ss, 0x20 | 0x3
+    USER_MODE_CODE_SEGMENT_SELECTOR equ 0x18
+    USER_MODE_DATA_SEGMENT_SELECTOR equ 0x20
+    mov cs, USER_MODE_CODE_SEGMENT_SELECTOR | 0x3
+    mov ss, USER_MODE_DATA_SEGMENT_SELECTOR | 0x3
 ~~~
 
 The register `ds`, and the other data segment registers, should be set to the
@@ -110,18 +114,17 @@ should now have a kernel that can enter user mode.
 ## Using C for User Mode Programs
 
 The kernel is compiled as an ELF [@wiki:elf] binary, which is a format that
-allows for more complex and convenient layouts and functionality than a plain
-flat binary. The reason we can use ELF for the kernel is that GRUB knows how to
-parse the ELF structure.
+features for more functionality than flat binary. The reason we can use
+ELF for the kernel is that GRUB knows how to parse the ELF structure.
 
 If we implement an ELF parser, we can compile the user mode programs into ELF
 binaries as well. We leave this as an exercise for the reader.
 
 One thing we can do to make it easier to develop user mode programs is to allow
 them to be written in C, but still compile them to flat binaries. In C the
-layout of the generated code is more unpredictable and the entry point
-(`main()`) might not be at offset 0. One way to work around this is to add a
-few assembler lines placed at offset 0 which calls `main()`:
+layout of the generated code is more unpredictable and the entry point, `main`,
+might not be at offset 0. One way to work around this is to add a few assembly
+lines placed at offset 0 which calls `main`:
 
 ~~~ {.nasm}
     extern main
@@ -163,8 +166,7 @@ executable (remember that `start.s` gets compiled to `start.o`):
     }
 ~~~
 
-_Note_: `*(.text)` will not include the `.text` section of `start.o` again. See
-[@ldcmdlang] for more details.
+_Note_: `*(.text)` will not include the `.text` section of `start.o` again.
 
 With this script we can write programs in C or assembler (or any other language
 that compiles to object files linkable with `ld`), and it is easy to load and
@@ -185,9 +187,10 @@ For linking, the followings flags should be used:
 
 ### A C Library
 
-It might now be interesting to start thinking about writing a short libc for
-your programs. Some of the functionality requires [system calls](#system-calls)
-to work, but some, such as the functions in `string.h`, does not.
+It might now be interesting to start thinking about writing a small standard
+library for your programs. Some of the functionality requires [system
+calls](#system-calls) to work, but some, such as the functions in `string.h`,
+does not.
 
 ## Further Reading
 

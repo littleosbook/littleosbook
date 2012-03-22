@@ -1,8 +1,8 @@
 # File Systems
 
 We are not required to have file systems in our operating system, but it is a
-very usable abstraction, and it often plays a central part in many operations
-of several existing OS's, especially UNIX-like systems. Before we start the
+very usable abstraction, and it often plays a central part of many operating
+systems, especially UNIX-like operating systems. Before we start the
 process of supporting multiple processes and system calls we might want to
 consider implementing a simple file system.
 
@@ -12,54 +12,56 @@ How do we specify what programs to run in our OS? Which is the first program to
 run? How do programs output data or read input?
 
 In UNIX-like systems, with their almost-everything-is-a-file convention, these
-problems are solved by the file systems. It might also be interesting to read a
+problems are solved by the file system. It might also be interesting to read a
 bit about the Plan 9 project, which takes this idea one step further (see
 the section ["Further Reading"](#further-reading-6) below).
 
 ## A Simple Read-Only File System
 
-The most simple file system possible might be what we already have - one
+The most simple file system might be what we already have - one
 file, existing only in RAM, loaded by GRUB before the kernel starts. When our
-kernel and operating system grows, this is probably too limiting.
+kernel and operating system grows this is probably too limiting.
 
-A next step could be to add structure to this GRUB-loaded module. With a
-utility program - perhaps called `mkfs` - which we run at build time, we can
-create our file system in this file.
+The next step could be to add structure to the filed loaded by GRUB. A utility
+program can be created that runs at build time, creating a file system in a
+file. This way, we get a read-only file system in memory once GRUB has loaded
+the file.
 
-`mkfs` can traverse a directory on our host system and add all subdirectories
-and files as part of our target file system. Each object in the file system
-(directory or file) can consist of a header and a body, where the body of a
-file is the actual file and the body of a directory is a list of entries -
-names and "addresses" of other files and directories.
+The program creating the file system can traverse a directory on the host
+system and add all subdirectories and files as part of the target file system.
+Each object in the file system (directory or file) can consist of a header and
+a body, where the body of a file is the actual file and the body of a directory
+is a list of entries - names and "addresses" of other files and directories.
 
 Each object in this file system will become contiguous, so they will be easy to
-read from our kernel. All objects will also have a fixed size (except for the
-last one, which can grow); It might be difficult to add new or modify existing
-files. We can make the file system read-only.
+read from the kernel. All objects will also have a fixed size (except for the
+last one, which can grow), therefore it is difficult to add new files or modify
+existing ones.
 
 ## Inodes and Writable File Systems
 
-When we decide that we want a more complex - and realistic - file system, we
-might want to look into the concept of an _inode_. See the section ["Further
-Reading](#further-reading-6) for recommended reading.
+When the need for a writable file system arises, you might want to look into
+the concept of an _inode_. See the section
+["Further Reading"](#further-reading-6) for recommended reading.
 
 ## A Virtual File System
 
-What abstraction should we use for reading and writing to devices such as the
+What abstraction should be used for reading and writing to devices such as the
 screen and the keyboard?
 
-With a virtual file system (VFS) we create an abstraction on top of any real
-file systems we might have. The VFS mainly supplies the path system and file
-hierarchy, and delegates operations on files to the underlying file
-systems. The original paper on VFS is succinct, concrete, and well worth a
+A virtual file system (VFS) creates an abstraction on top of the concrete
+file systems. The VFS mainly supplies the path system and file
+hierarchy, it delegates operations on files to the underlying file
+systems. The original paper on VFS is succinct and well worth a
 read. See the section ["Further Reading"](#further-reading-6) for a reference.
 
-With a VFS we could mount a special file system on `/dev`, which handles all
-devices such as keyboards and the screen. However, on could also take the
-traditional UNIX approach, with major/minor device numbers and `mknod` to
-create special files for our devices. Which approach you think is the most
-appropriate is up to you, there is no right or wrong when building abstraction
-layers (although some abstraction layers turns out way more useful than others).
+With a VFS we could mount a special file system on the path `/dev`. This file
+system would handle all devices such as keyboards and the console. However, one
+could also take the traditional UNIX approach, with major/minor device numbers
+and `mknod` to create special files for devices. Which approach you think
+is the most appropriate is up to you, there is no right or wrong when building
+abstraction layers (although some abstractions turns out way more useful
+than others).
 
 ## Further Reading
 

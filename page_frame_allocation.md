@@ -9,15 +9,13 @@ we know what memory is free? That is the role of the page frame allocator.
 ### How Much Memory is There?
 
 First we need to know how much memory the computer we're running on has.
-The easiest way to do this is to read it from the multiboot [@multiboot]
-structure sent to us by GRUB. GRUB collects the information we need about
+The easiest way to do this is to read it from the multiboot structure
+[@multiboot] passed to us by GRUB. GRUB collects the information we need about
 the memory - what is reserved, I/O mapped, read-only etc. We must also make
 sure that we don't mark the part of memory used by the kernel as free (since
-GRUB doesn't mark this memory as reserved). One way
-to do this is to export labels at the beginning and end of the kernel binary
-from the linker script.
-
-The updated linker script:
+GRUB doesn't mark this memory as reserved). One way to know how much memory the
+kernel uses is to export labels at the beginning and the end of the kernel
+binary from the linker script:
 
 ~~~
     ENTRY(loader)           /* the name of the entry symbol */
@@ -57,8 +55,8 @@ The updated linker script:
     kernel_physical_end = . - 0xC0000000;
 ~~~
 
-Assembly code can read these labels directly, and perhaps push them onto the
-stack so we can use them from C:
+These labels directly can be read from assembly code and pushed on the stack to
+make them available to C code:
 
 ~~~ {.nasm}
     extern kernel_virtual_start
@@ -77,8 +75,8 @@ stack so we can use them from C:
 ~~~
 
 This way we get the labels as arguments to `kmain`. If you want to use C
-instead of assembly, one way to do it is to declare the label as a function and
-take the address of the function:
+instead of assembly, one way to do it is to declare the labels as functions and
+take the addresses of these functions:
 
 ~~~ {.c}
     void kernel_virtual_start(void);
@@ -102,35 +100,35 @@ can't map part of pages into memory.
 
 How do we know which page frames are in use? The page frame allocator needs to
 keep track of which are free and which aren't. There are several ways to do
-this: Bitmaps, linked lists, trees, the Buddy System (used by Linux) etc. See
-[@osdev:pfa] for more details.
+this: bitmaps, linked lists, trees, the Buddy System (used by Linux) etc. See
+the article on OSDev [@osdev:pfa] for more details.
 
-Bitmaps are quite easy to implement. One bit for each page frame, and dedicate
-one (or more) page frames to store the bitmap. But other designs might be
-better and/or more fun.
+Bitmaps are quite easy to implement. One bit is used for each page frame and
+one (or more) page frames are dedicated to store the bitmap. Note that this is
+just one way to do it, other designs might be better and/or more fun to
+implement.
 
 ## How Can We Access a Page Frame?
 
 When we use our page frame allocator to allocate page frames it gives us the
 physical start address of the page frame. This page frame is not mapped in - no
-page table points to the frame. (If we mapped an entire 4 MB chunk for the
-kernel, and the page frame lies somewhere in there, it will be mapped in.) How
-can we read and write data to the frame?
+page table points to this page frame. How can we read and write data to the
+frame?
 
 We need to map the page frame into virtual memory, by updating the PDT and/or
 PT used by the kernel. What if all available page tables are full? Then we
 can't map the page frame into memory, because we'd need a new page table -
 which takes up an entire page frame - and to write to this page frame we'd need
-to map it in... Somehow we must break this recursion.
+to map its page frame... Somehow we must break this recursion.
 
-One solution is to reserve part of the first page table used by the kernel (or
-some other higher-half page table) for temporarily mapping in page frames so
-that we can access to them. If the kernel is mapped in at `0xC0000000` (page
-directory entry with index 768), and we've used 4 KB page frames, the kernel
+One solution is to reserve a part of the first page table used by the kernel
+(or some other higher-half page table) for temporarily mapping page frames to
+make them accessible. If the kernel is mapped at `0xC0000000` (page
+directory entry with index 768), and 4 KB page frames are used, then the kernel
 has at least one page table. If we assume, or limit us to, a kernel of size at
 most 4 MB minus 4 KB we can dedicate the last entry (entry 1023) of this page
-table for temporary mappings. The virtual address of pages mapped in like this
-will be:
+table for temporary mappings. The virtual address of pages mapped in using the
+last entry of the kernel's PT will be:
 
 ~~~
     (768 << 22) | (1023 << 12) | 0x000 = 0xC03FF000
@@ -142,18 +140,18 @@ paging directory, and remove the temporary mapping.
 
 ## A Kernel Heap
 
-So far we've been able to work with only fixed-size data, or directly with raw
+So far we've only been able to work with fixed-size data, or directly with raw
 memory. Now that we have a page frame allocator we can implement `malloc` and
 `free` to use in the kernel.
 
-Kernighan and Ritchie have an example implementation in [@knr] that we can draw
-inspiration from. The only real modifications we need to do is to remove calls
-to `sbrk`/`brk`,and directly ask the page frame allocator for the page frames,
-and the paging system to map them in.
-
-A correct implementation should also give back
-page frames to the page frame allocator on `free`, whenever sufficiently large
-blocks are freed.
+Kernighan and Ritchie have an example implementation in their book [@knr] that
+we can draw inspiration from. The only modification we need to do is to
+replace calls to `sbrk`/`brk` with calls to the page frame allocator when more
+memory is needed. We must also make sure to map the page frames returned by the
+page frame allocator to virtual addresses.
+A correct implementation should also return page frames to the page frame
+allocator on call to `free`, whenever sufficiently large blocks of memory are
+freed.
 
 ## Further reading
 

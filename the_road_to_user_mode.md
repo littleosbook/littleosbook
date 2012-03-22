@@ -3,14 +3,14 @@
 Now that the kernel boots, prints to screen and reads from keyboard - what do
 we do? Usually, a kernel is not supposed to do the application logic itself,
 but leave that for applications. The kernel creates the proper
-abstractions (for memory, files, devices, etc.) so that application development
-becomes easier, performs tasks on behalf of applications (system calls), and
+abstractions (for memory, files, devices, etc.) to make application development
+easier, performs tasks on behalf of applications (system calls) and
 [schedules processes](#scheduling).
 
 User mode, in contrast with kernel mode, is the environment in which the user's
-programs execute.  It is less privileged than the kernel, and will prevent
-badly written user programs from messing with other programs or the kernel.
-Badly written kernels are free to mess up what they want.
+programs execute. This environment is less privileged than the kernel, and will
+prevent badly written user programs from messing with other programs or the
+kernel. Badly written kernels are free to mess up what they want.
 
 There's quite a way to go until the OS created in this book can execute
 programs in user mode, but this chapter will show how to easily execute a small
@@ -23,8 +23,8 @@ want to execute into memory. More feature-complete operating systems usually
 have drivers and file systems that enable them load the software from a CD-ROM
 drive, a hard disk or other persistent media.
 
-Instead of creating all these drivers and file systems, we will use a
-feature in GRUB called modules to load our program.
+Instead of creating all these drivers and file systems we will use a
+feature in GRUB called modules to load the program.
 
 ### GRUB Modules
 
@@ -42,7 +42,7 @@ Now create the folder `iso/modules`:
     mkdir -p iso/modules
 ~~~
 
-Later in this chapter, the application `program` will be created.
+The application `program` will be created later in this chapter.
 
 The code that calls `kmain` must be updated to pass information to `kmain`
 about where it can find the modules. We also want to tell GRUB that it should
@@ -78,10 +78,10 @@ it an argument for `kmain`.
 
 ### A Very Simple Program
 
-Any program we write at this stage won't be able to communicate with the
-outside. Therefore, a very short program that writes a value to a register
-suffices. Halting Bochs and reading its log should verify that the program has
-run.
+Any program we write at this stage won't be able to do much. Therefore, a very
+short program that writes a value to a register suffices. Halting Bochs and
+reading the log should verify that the program has run. Below follows an
+example of such a short program:
 
 ~~~ {.nasm}
     ; set eax to some distinguishable number, to read from the log afterwards
@@ -95,7 +95,7 @@ run.
 ### Compiling
 
 Since our kernel cannot parse advanced executable formats we need to compile
-the code into a flat binary. NASM can do it with the flag `-f`:
+the code into a flat binary. NASM can do this with the flag `-f`:
 
 ~~~
     nasm -f bin program.s -o program
@@ -105,21 +105,21 @@ This is all we need. You must now move the file `program` to the folder
 `iso/modules`.
 
 ### Finding the Program in Memory
-Before jumping to the program, we must find where it resides in memory.
+Before jumping to the program we must find where it resides in memory.
 Assuming that the contents of the `ebx` is passed as an argument to `kmain`, we
 can do this entirely from C.
 
-The pointer in `ebx` points to a multiboot-structure [@multiboot]. Download the
+The pointer in `ebx` points to a _multiboot_ structure [@multiboot]. Download the
 `multiboot.h` file from
 <http://www.gnu.org/software/grub/manual/multiboot/html_node/multiboot.h.html>,
 which describes the structure.
 
-The pointer passed to `kmain` from the `ebx` register can now be casted to
+The pointer passed to `kmain` from the `ebx` register can now be casted to a
 `multiboot_info_t` pointer. The address of the first module is in the field
 `mods_addr`. The following code shows an example:
 
 ~~~ {.c}
-    int kmain(/* additional arguments */, unsigned int ebx)
+    int kmain(/* additional arguments */ unsigned int ebx)
     {
         multiboot_info_t *mbinfo = (multiboot_info_t *) ebx;
         unsigned int address_of_module = mbinfo->mods_addr;
@@ -130,11 +130,10 @@ However, before just blindly following the pointer, you should check that the
 module got loaded correctly by GRUB. This can be done by checking the `flags`
 field of the `multiboot_info_t` structure. You should also check the field
 `mods_count` to make sure it is exactly 1. For more details about the multiboot
-structure, see [@multiboot].
+structure, see the multiboot documentation [@multiboot].
 
 ### Jumping to the Code
-The only thing left to execute the external program is to jump to the code
-loaded by GRUB.
+The only thing left to do is to jump to the code loaded by GRUB.
 Since it is easier to parse the multiboot structure in C, calling the code from
 C is more convenient (it can of course be done with `jmp` or `call` in
 assembly as well). The C code could look like the following:
@@ -148,15 +147,16 @@ assembly as well). The C code could look like the following:
 ~~~
 
 If we start the kernel, wait until it has run and entered the infinite loop in
-the program, and then halt Bochs, we should see `0xDEADBEEF` in `eax` via the
-Bochs log. We have successfully started a program in our OS!
+the program, and then halt Bochs, we should see `0xDEADBEEF` in the register
+`eax` via the Bochs log. We have successfully started a program in our OS!
 
 ## The Beginning of User Mode
 
-The program we've written now runs in the same mode as the kernel - we've just
-entered it in a somewhat peculiar way. To enable applications to execute
-at a different privilege level we'll need to do [segmentation](#segmentation),
-[paging](#paging) and [page frame allocation](#page-frame-allocation).
+The program we've written now runs at the same privilege level as the kernel -
+we've just entered it in a somewhat peculiar way. To enable applications to
+execute at a different privilege level we'll need to do
+[segmentation](#segmentation), [paging](#paging) and [page frame
+allocation](#page-frame-allocation).
 
 It's quite a lot of work and technical details to go through, but in a few
 chapters you'll have working user mode programs.

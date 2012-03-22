@@ -3,19 +3,18 @@ This chapter will show you how to use C instead of assembly as the programming
 language for the OS. Assembly is very good for interacting with the CPU and
 enables maximum control over every aspect of the code.  However, at least for
 the authors, C is a much more convenient language to use. Therefore, we would
-like to use C as much as possible and only assembler where it make sense.
+like to use C as much as possible and only assembly where it make sense.
 
 ## Setting Up a Stack
-One prerequisite for using C is a stack, since all non-trivial (non-contrived
-examples) C programs uses a stack.  Setting up a stack is not harder than to
-make the `esp` register point to the end of an area of free memory (remember
-that the stack grow towards lower addresses) that is correctly aligned
-(alignment on 4 bytes is recommended from a performance perspective). Also
-remember that the stack grows towards lower addresses.
+One prerequisite for using C is a stack, since all non-trivial C programs uses
+a stack.  Setting up a stack is not harder than to make the `esp` register
+point to the end of an area of free memory (remember that the stack grow
+towards lower addresses) that is correctly aligned (alignment on 4 bytes is
+recommended from a performance perspective).
 
-We could point `esp` to a random area in memory, since so far, the only thing
+We could point `esp` to a random area in memory since, so far, the only thing
 in the memory is GRUB, BIOS, the OS kernel and some memory-mapped I/O.  This is
-not a good idea, since we don't know how much memory is available or if the
+not a good idea - we don't know how much memory is available or if the
 area `esp` would point to is used by something else. A better idea is to
 reserve a piece of uninitialized memory in the `bss` section in the ELF
 executable of the kernel. It is better to use the `bss` section instead of the
@@ -23,8 +22,8 @@ executable of the kernel. It is better to use the `bss` section instead of the
 ELF, GRUB will allocate any memory reserved in the `bss` section
 when loading the OS.
 
-To declare uninitialized data, the NASM pseudo-instruction `resb` [@resb] can
-be used:
+The NASM pseudo-instruction `resb` [@resb] can be used to declare uninitialized
+data:
 
 ~~~ {.nasm}
     KERNEL_STACK_SIZE equ 4096                  ; size of stack in bytes
@@ -36,7 +35,7 @@ be used:
 ~~~
 
 We can use uninitialized memory because before any stack location is read from,
-it should be written to (or the code reads garbage).
+it should be written to.
 
 The stack pointer is then set up by pointing `esp` to the end of the
 `kernel_stack` memory:
@@ -76,7 +75,8 @@ rightmost argument first. The return value of the function is placed in the
 
 ### Packing Structs
 In the rest of book, you will often come across "configuration bytes" that are
-a collection of bits in a very specific order. Below follows an example:
+a collection of bits in a very specific order. Below follows an example with 32
+bits:
 
     Bit:     | 31     24 | 23          8 | 7     0 |
     Content: | index     | address       | config  |
@@ -95,10 +95,10 @@ configurations, it is much more convenient to use "packed structures":
 When using the struct in the previous example there is no guarantee that the
 size of the `struct` will be exactly 32 bits - the compiler can add some
 padding between elements to speed up element access. When using a `struct` to
-represent configuration bytes, it is very important that the compiler uses
-\emph{no} padding, since the struct will eventually be treated as an unsigned
-integer by the hardware. To force GCC to _not_ add any padding, the attribute
-`packed` can be used in the following way:
+represent configuration bytes, it is very important that the compiler does
+_not_ add any padding, because the struct will eventually be treated as an
+unsigned integer by the hardware. The attribute `packed` can be used to force
+GCC to _not_ add any padding:
 
 ~~~ {.C}
     struct example {
@@ -108,23 +108,23 @@ integer by the hardware. To force GCC to _not_ add any padding, the attribute
     } __attribute__((packed));
 ~~~
 
-Note that `__attribute__((packed))` is not part of the C standard, therefore it
-might not work with all C compilers.
+Note that `__attribute__((packed))` is not part of the C standard - it might
+not work with all C compilers.
 
 ## Compiling C Code
-When compiling the C code for the OS, a lot of flags to GCC are used. This is
-because the C code should _not_ assume the presence of a standard
-library, since there is no standard library available for our OS. For
-more information about the flags, see the GCC manual.
+When compiling the C code for the OS, a lot of flags to GCC need to be used.
+This is because the C code should _not_ assume the presence of a standard
+library, since there is no standard library available for our OS. For more
+information about the flags, see the GCC manual.
 
-The flags used for compiling the C code are described below:
+The flags used for compiling the C code are:
 
 ~~~
     -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles
     -nodefaultlibs
 ~~~
 
-As always when writing C programs, we recommend turning on all warnings and
+As always when writing C programs we recommend turning on all warnings and
 treat warnings as errors:
 
 ~~~
@@ -137,7 +137,7 @@ in later chapters it will).
 
 ## Build Tools
 Now is also probably a good time to set up some build tools to make it easier
-to compile and test-run the OS. We recommend using make [@make], but there are
+to compile and test-run the OS. We recommend using `make` [@make], but there are
 plenty of other build systems available. A simple Makefile for the OS could
 look like the following example:
 
@@ -194,6 +194,7 @@ figure:
     |       |-- stage2_eltorito
     |-- kmain.c
     |-- loader.s
+    |-- Makefile
 ~~~
 
 You should be now able to start the OS in Bochs with the simple command `make
@@ -201,5 +202,5 @@ run`.
 
 ## Further Reading
 
-- Kernigan & Richies book, _The C Programming Language, Second Edition_, [@knr]
+- Kernigan & Richie's book, _The C Programming Language, Second Edition_, [@knr]
   is great for learning about all the aspects of C.

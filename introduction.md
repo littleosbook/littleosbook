@@ -10,9 +10,9 @@ the web and otherwise, and add our own insights into the problems we
 encountered and struggled with.
 
 This book is not about the theory behind operating systems, or how any specific
-operating system (OS) works. For OS theory we recommend _Modern Operating
-Systems_ by Andrew Tanenbaum [@ostanenbaum]. Lists and details on current
-operating systems are available on the internet.
+operating system (OS) works. For OS theory we recommend the book _Modern
+Operating Systems_ by Andrew Tanenbaum [@ostanenbaum]. Lists and details on
+current operating systems are available on the internet.
 
 The starting chapters are quite detailed and explicit, to quickly get you into
 coding. Later chapters give more of an outline of what is needed, as more and
@@ -24,9 +24,9 @@ give a deeper understanding of the topics covered.
 ## The Reader
 
 The reader of this book should be comfortable with UNIX/Linux, systems
-programming and the C language. This book course be a way to get
-started learning those things, but it will be tougher going, especially where
-we implicitly make use of these building blocs. Search engines and other
+programming and the C language. This book could be a way to get
+started learning those things, but it will be more difficult and developing an
+operating system is already challenging on its own. Search engines and other
 tutorials are often helpful if you get stuck.
 
 ## Credits, Thanks and Acknowledgements

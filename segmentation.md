@@ -2,34 +2,34 @@
 
 _Segmentation_ in x86 means accessing the memory through segments. Segments are
 portions of the address space, possibly overlapping, specified by a base
-address and a limit. To address a byte in segmented memory, you use a 48-bit
-_logical address_: 16 bits that specifies the segment, and 32-bits that
+address and a limit. To address a byte in segmented memory you use a 48-bit
+_logical address_: 16 bits that specifies the segment and 32-bits that
 specifies what offset within that segment you want. The offset is added to the
 base address of the segment, and the resulting linear address is checked
 against the segment's limit - see the figure below. If everything works out
-fine, (including access-right checks ignored for now), the results is a _linear
+fine (including access-right checks ignored for now) the result is a _linear
 address_. If paging is disabled (paging is described in the chapter
-["Paging"](#paging)), this linear address space is mapped 1:1 on the _physical
-address_ space, and the physical memory can be accessed.
+["Paging"](#paging)), then the linear address space is mapped 1:1 onto the
+_physical address_ space, and the physical memory can be accessed.
 
 ![Translation of logical addresses to linear addresses.
 ](images/intel_3_5_logical_to_linear.png)
 
 To enable segmentation you need to set up a table that describes each segment -
 a _segment descriptor table_. In x86, there are two types of descriptor tables:
-The _Global Descriptor Table_ (GDT) and _Local Descriptor Tables_ (LDT). An LDT
+the _Global Descriptor Table_ (GDT) and _Local Descriptor Tables_ (LDT). An LDT
 is set up and managed by user-space processes, and each process have their own
-LDT's.  LDT's can be used if a more complex segmentation model is desired - we
+LDT.  LDTs can be used if a more complex segmentation model is desired - we
 won't use it. The GDT is shared by everyone - it's global.
 
 ## Accessing Memory
 Most of the time when accessing memory there is no need to explicitly specify
 the segment to use. The processor has six 16-bit segment registers: `cs`, `ss`,
-`ds`, `es`, `gs` and  `fs`. `cs` is the code segment register and specifies the
-segment to use when fetching instructions. `ss` is used whenever accessing the
-stack (through the stack pointer `esp`), and `ds` is used for other data
-accesses. `es`, `gs` and `fs` are free to use however the OS or the user
-processes wish (we will set them, but not use them).
+`ds`, `es`, `gs` and  `fs`. The register `cs` is the code segment register and
+specifies the segment to use when fetching instructions. The register `ss` is
+used whenever accessing the stack (through the stack pointer `esp`), and `ds`
+is used for other data accesses. The OS is free to use the registers `es`, `gs`
+and `fs` however it want.
 
 Below is an example showing implicit use of the segment registers:
 
@@ -65,16 +65,16 @@ manual [@intel3a].
 ## The Global Descriptor Table (GDT)
 
 A GDT/LDT is an array of 8-byte segment descriptors. The first descriptor in
-the GDT is always a null descriptor, and can never be used to access memory. At
+the GDT is always a null descriptor and can never be used to access memory. At
 least two segment descriptors (plus the null descriptor) are needed for the GDT,
 because the descriptor contains more information than just the base and
-limit fields. The two most relevant fields here are the _Type_ field and the
+limit fields. The two most relevant fields for us are the _Type_ field and the
 _Descriptor Privilege Level_ (DPL) field.
 
 Table 3-1 in chapter 3 of the Intel manual [@intel3a] specifies the values for
-the Type field. In the table, one can see that the Type field can't be both
+the Type field. The table shows that the Type field can't be both
 writable _and_ executable at the same time.
-Therefore, two segments are needed: One segment for executing code to put in
+Therefore, two segments are needed: one segment for executing code to put in
 `cs` (Type is Execute-only or Execute-Read) and one segment for reading and
 writing data (Type is Read/Write) to put in the other segment registers.
 
@@ -105,8 +105,7 @@ fields.
 
 Loading the GDT into the processor is done with the `lgdt` assembly
 instruction, which takes the address of a struct that specifies the start and
-size of the GDT:
-It is easiest to encode this information using a ["packed
+size of the GDT.  It is easiest to encode this information using a ["packed
 struct"](#packing-structs) as shown in the following example:
 
 ~~~ {.c}
@@ -117,7 +116,7 @@ struct"](#packing-structs) as shown in the following example:
 ~~~
 
 If the content of the `eax` register is the address to such a struct, then the
-GDT can be loaded with assembly code shown below:
+GDT can be loaded with the assembly code shown below:
 
 ~~~ {.nasm}
     lgdt [eax]
@@ -126,7 +125,7 @@ GDT can be loaded with assembly code shown below:
 It might be easier if you make this instruction available from C, the same way
 as was done with the assembly instructions `in` and `out`.
 
-Once the GDT has been loaded, the segment registers needs to be loaded with
+After the GDT has been loaded the segment registers needs to be loaded with
 their corresponding segment selectors. The content of a segment selector is
 described in the figure and table below:
 
@@ -147,13 +146,14 @@ offset (index)   Offset within descriptor table.
 
 Table: The layout of segment selectors.
 
-The offset is added to the start of the GDT to get the address of the segment
-descriptor: `0x08` for the first descriptor and `0x10` for the second, since
-each descriptor is 8 bytes. The Requested Privilege Level (RPL) should be `0`,
-since the kernel of the OS should execute in privilege level 0.
+The offset of the segment selector is added to the start of the GDT to get the
+address of the segment descriptor: `0x08` for the first descriptor and `0x10`
+for the second, since each descriptor is 8 bytes. The Requested Privilege Level
+(RPL) should be `0` since the kernel of the OS should execute in privilege
+level 0.
 
 Loading the segment selector registers is easy for the data registers - just
-copy the correct offsets into the registers:
+copy the correct offsets to the registers:
 
 ~~~ {.nasm}
     mov ds, 0x10
@@ -175,8 +175,8 @@ To load `cs` we have to do a "far jump":
 ~~~
 
 A far jump is a jump where we explicitly specify the full 48-bit logical
-address: The segment selector to use and the absolute address to jump to. It
-will first set `cs` to `0x08`, and then jump to `flush_cs` using its absolute
+address: the segment selector to use and the absolute address to jump to. It
+will first set `cs` to `0x08` and then jump to `flush_cs` using its absolute
 address.
 
 ## Further Reading

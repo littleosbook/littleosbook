@@ -5,20 +5,15 @@ do I start?" is likely to come up several times during the course of the
 project.  This chapter will help you set up your development environment and
 booting a very small (and primitive) operating system.
 
-## Requirements
-In this book, we will assume that you are familiar with the C programming
-language and that you have some programming experience. It will be also be
-helpful if you have a basic understanding of assembly code.
-
 ## Tools
 
 ### The Easy Way
 The easiest way to get all the required tools is to use Ubuntu [@ubuntu] as
 your operating system. If you don't want to run Ubuntu natively on your
 computer, it works just as well running it using a virtual machine, for example
-in VirtualBox [@virtualbox].
+VirtualBox [@virtualbox].
 
-The packages needed can then be installed by running:
+The packages needed can then be installed using `apt-get`:
 
 ~~~ {.bash}
     sudo apt-get install build-essential nasm genisoimage bochs bochs-x
@@ -34,7 +29,7 @@ The code will make use of one type attribute that is specific for GCC [@gcc]
 (the meaning of the attribute will be explained later):
 
 ~~~
-    __attribute__((packed))__
+    __attribute__((packed))
 ~~~
 
 Due to this attribute, the example code might be hard to compile using a C
@@ -51,15 +46,15 @@ operating system. All code examples have been successfully compiled using
 Ubuntu [@ubuntu] versions 11.04 and 11.10.
 
 ### Build System
-GNU Make [@make] has been used when constructing the Makefiles examples, but we
+GNU Make [@make] has been used when constructing the Makefile examples. We
 don't use instructions that are specific to GNU Make.
 
 ### Virtual Machine
-When developing an OS, it's very convenient to be able to run your code in a
+When developing an OS it is very convenient to be able to run your code in a
 _virtual machine_ instead of on a physical computer. Bochs [@bochs] is an
 emulator for the x86 (IA-32) platform which is well suited for OS development
 due to its debugging features. Other popular choices are QEMU [@qemu] and
-VirtualBox [@virtualbox], but this book uses Bochs.
+VirtualBox [@virtualbox] but this book uses Bochs.
 
 ## Booting
 Booting an operating system consists of transferring control along a
@@ -67,26 +62,26 @@ chain of small programs, each one more "powerful" than the previous one, where
 the operating system is the last "program". See the following figure for an
 example of the boot process:
 
-![An example of the boot process, each box is a program.](images/boot_chain.png)
+![An example of the boot process. Each box is a program.](images/boot_chain.png)
 
 ### BIOS
 When the PC is turned on, the computer will start a small program that adheres
 to the _Basic Input Output System_ (BIOS) [@wiki:bios] standard. This program is
 usually stored on a read only memory chip on the motherboard of the PC. The
 original role of the BIOS program was to export some library functions for
-printing to the screen, reading keyboard input etc. However, today's operating
-systems do not use the BIOS functions, instead they use drivers that interact
-directly with the hardware, bypassing the BIOS [@wiki:bios].
+printing to the screen, reading keyboard input etc. Modern operating
+systems do not use the BIOS' functions, they use drivers that interact
+directly with the hardware, bypassing the BIOS.
 Today, BIOS mainly runs some early diagnostics (power-on-self-test) and then
 transfers control to the bootloader.
 
 ### The Bootloader
-The BIOS program will transfer control of the PC to a program called
+The BIOS program will transfer control of the PC to a program called a
 _bootloader_. The bootloader's task is to transfer control to us, the operating
 system developers, and our code. However, due to some restrictions[^1] of the
-hardware and backward compatibility, the bootloader is often split into two
-parts: the first part of the bootloader will transfer control to the second
-part, which finally gives control of the PC to the operating system.
+hardware and because of backward compatibility, the bootloader is often split
+into two parts: the first part of the bootloader will transfer control to the
+second part, which finally gives control of the PC to the operating system.
 
 [^1]: The bootloader must fit into the _master boot record_ (MBR) boot sector
 of a hard drive, which is only 512 bytes large.
@@ -97,9 +92,9 @@ Unified Bootloader (GRUB) [@grub].
 
 Using GRUB, the operating system can be built as an ordinary ELF [@wiki:elf]
 executable, which will be loaded by GRUB into the correct memory location.
-However, the compilation of the kernel requires that the code is laid out in
-memory in a specific way. How to compile the kernel will be discussed later in
-this chapter.
+The compilation of the kernel requires that the code is laid out in
+memory in a specific way (how to compile the kernel will be discussed later in
+this chapter).
 
 ### The Operating System
 GRUB will transfer control to the operating system by jumping to a position in
@@ -111,7 +106,7 @@ has made the jump, the OS has full control of the computer.
 ## Hello Cafebabe
 This section will describe how to implement of the smallest possible OS that
 can be used together with GRUB. The only thing the OS will do is write
-`0xCAFEBABE` in the `eax` register (most people would probably not even call
+`0xCAFEBABE` to the `eax` register (most people would probably not even call
 this an OS).
 
 ### Compiling the Operating System
@@ -138,12 +133,12 @@ describes how to set one up). Save the following code in a file called
 ~~~
 
 The only thing this OS will do is write the very specific number
-`0xCAFEBABE` into the `eax` register. It is _very_ unlikely that the number
+`0xCAFEBABE` to the `eax` register. It is _very_ unlikely that the number
 `0xCAFEBABE` would be in the `eax` register if the OS did _not_ put it
 there.
 
 The file `loader.s` can be compiled into a 32 bits ELF [@wiki:elf] object file
-with the follow command:
+with the following command:
 
 ~~~ {.bash}
     nasm -f elf32 loader.s
@@ -153,7 +148,7 @@ with the follow command:
 The code must now be linked to produce an executable file, which requires some
 extra thought compared to when linking most programs. We want GRUB to load the
 kernel at a memory address larger than or equal to `0x00100000` (1 megabyte
-(MB)), because addresses lower than 1 MB are used by GRUB itself, by the BIOS,
+(MB)), because addresses lower than 1 MB are used by GRUB itself, BIOS
 and memory-mapped I/O. Therefore, the following linker script is needed
 (written for GNU LD [@gnubinutils]):
 
@@ -201,12 +196,12 @@ from GRUB 0.97 by downloading the source from
 <ftp://alpha.gnu.org/gnu/grub/grub-0.97.tar.gz>.  However, the `configure`
 script doesn't work well with Ubuntu [@ubuntu-grub], so the binary file can be
 downloaded from <http://littleosbook.github.com/files/stage2_eltorito>. Copy
-the file `stage2_eltorito` to the folder than already contains `loader.s` and
+the file `stage2_eltorito` to the folder that already contains `loader.s` and
 `link.ld`.
 
 ### Building an ISO Image
 The executable must be placed on a media that can be loaded by a virtual or
-physical machine. In this book, we will use ISO [@wiki:iso] image files as the
+physical machine. In this book we will use ISO [@wiki:iso] image files as the
 media, but one can also use floppy images, depending on what the virtual or
 physical machine supports.
 
@@ -218,7 +213,7 @@ places:
 ~~~ {.bash}
     mkdir -p iso/boot/grub              # create the folder structure
     cp stage2_eltorito iso/boot/grub/   # copy the bootloader
-    cp kernel.ef iso/boot/              # copy the kernel
+    cp kernel.elf iso/boot/             # copy the kernel
 ~~~
 
 A configuration file `menu.lst` for GRUB must be created. This file tells GRUB
@@ -232,8 +227,8 @@ where the kernel is located and configures some options:
     kernel /boot/kernel.elf
 ~~~
 
-Place the file `menu.lst` in the `iso/boot/grub/` folder. The contents of `iso`
-folder should look the following:
+Place the file `menu.lst` in the folder `iso/boot/grub/`. The contents of the
+`iso` folder should now look like the following figure:
 
 ~~~
     iso
@@ -244,7 +239,7 @@ folder should look the following:
       |-- kernel.elf
 ~~~
 
-The ISO image can now be generated with the following command:
+The ISO image can then be generated with the following command:
 
 ~~~
     genisoimage -R                              \
@@ -259,34 +254,11 @@ The ISO image can now be generated with the following command:
                 iso
 ~~~
 
-The flags used in the command are explained in the following table:
-
--------------------------------------------------------------------------------
-           Flag Description
---------------- ---------------------------------------------------------------
-              R Use the Rock Ridge protocol (needed by GRUB).
-
-              b The file to boot from (relative to the root folder of the ISO).
-
-   no-emul-boot Do not perform any disk emulation.
-
- boot-load-size The number 512 byte sectors to load. Apparently most BIOS
-                likes the number 4.
-
-boot-info-table Writes information about the ISO layout to ISO (needed by
-                GRUB).
-
-              o The name of the iso.
-
-              A The label of the iso.
-
-  input-charset The charset for the input files.
-
-          quiet Disable any output from genisoimage.
--------------------------------------------------------------------------------
+For more information about the flags used in the command, see the manual for
+`genisoimage`.
 
 The ISO image `os.iso` now contains the kernel executable, the GRUB
-bootloader and the configuration files.
+bootloader and the configuration file.
 
 ### Running Bochs
 The final step is to run the OS in Bochs using the `os.iso` ISO image.
@@ -301,28 +273,26 @@ configuration file is given below:
     ata0-master:     type=cdrom, path=minios.iso, status=inserted
     boot:            cdrom
     log:             bochslog.txt
-    mouse:           enabled=1
     clock:           sync=realtime, time0=local
     cpu:             count=1, ips=1000000
 ~~~
 
 You might need to change the path to `romimage` and `vgaromimage` depending on
 how you installed Bochs. More information about the Bochs config file can be
-found in [@bochs-config].
+found at Boch's website [@bochs-config].
 
-If you saved the configuration in a file named `bochsrc.txt`, then you can run
+If you saved the configuration in a file named `bochsrc.txt` then you can run
 Bochs with the following command:
 
 ~~~
     bochs -f bochsrc.txt -q
 ~~~
 
-The flag `-f` tells Bochs to use the given configuration file and the flag`-q`
+The flag `-f` tells Bochs to use the given configuration file and the flag `-q`
 tells Bochs to skip the interactive start menu. You should now see Bochs
 starting and displaying a console with some information from GRUB on it.
 
-After quitting Bochs, display the log produce by Bochs with command following
-command:
+After quitting Bochs, display the log produced by Boch:
 
 ~~~
     cat bochslog.txt
@@ -331,13 +301,13 @@ command:
 You should now see the contents of the registers of the CPU simulated by Bochs
 somewhere in the output. If you find `RAX=00000000CAFEBABE` or `EAX=CAFEBABE`
 (depending on if you are running Bochs with or without 64 bit support) in the
-output, then your OS has successfully booted!
+output then your OS has successfully booted!
 
 ## Further Reading
 - Gustavo Duertes has written an in-depth article about what actually happens
-  when a computers boots up,
+  when a computer boots up,
   <http://duartes.org/gustavo/blog/post/how-computers-boot-up>
-- Gustavo then continues to describe what the kernel does in the very early
+- Gustavo continues to describe what the kernel does in the very early
   stages at <http://duartes.org/gustavo/blog/post/kernel-boot-process>
-- The OSDev wiki also contains a nice article about booting a computer,
+- The OSDev wiki also contains a nice article about booting a computer:
   <http://wiki.osdev.org/Boot_Sequence>
