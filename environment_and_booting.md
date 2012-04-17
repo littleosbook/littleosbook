@@ -1,19 +1,22 @@
 # First Steps
 
-Developing an operating system (OS) is no easy task, and the question "Where
-do I start?" is likely to come up several times during the course of the
-project.  This chapter will help you set up your development environment and
-booting a very small (and primitive) operating system.
+Developing an operating system (OS) is no easy task, and the question "How do I
+even begin to solve this problem?" is likely to come up several times during
+the course of the project for different problems. This chapter will help you
+set up your development environment and booting a very small (and primitive)
+operating system.
 
 ## Tools
 
-### The Easy Way
-The easiest way to get all the required tools is to use Ubuntu [@ubuntu] as
-your operating system. If you don't want to run Ubuntu natively on your
-computer, it works just as well running it using a virtual machine, for example
-VirtualBox [@virtualbox].
+### Quick Setup
+We (the authors) have used Ubuntu [@ubuntu] as the operating system for doing
+OS development, running it both physically and virtually (using the
+virtual machine VirtualBox [@virtualbox]). A quick way to get everything up and
+running is to use the same setup as we did, since we know that these tools
+work with the samples provided in this book.
 
-The packages needed can then be installed using `apt-get`:
+Once Ubuntu is installed, either physical or virtual, the following packages
+needs to be installed using `apt-get`:
 
 ~~~ {.bash}
     sudo apt-get install build-essential nasm genisoimage bochs bochs-x
@@ -35,8 +38,8 @@ The code will make use of one type attribute that is specific for GCC [@gcc]
 Due to this attribute, the example code might be hard to compile using a C
 compiler other than GCC.
 
-For writing assembly, we choose NASM [@nasm] as the assembler, since we prefer
-NASM's syntax over GNU Assembler.
+For writing assembly, we have chosen NASM [@nasm] as the assembler, since we
+prefer NASM's syntax over GNU Assembler.
 
 Bash [@wiki:bash] will be used as the scripting language throughout the book.
 
@@ -47,14 +50,17 @@ Ubuntu [@ubuntu] versions 11.04 and 11.10.
 
 ### Build System
 GNU Make [@make] has been used when constructing the Makefile examples. We
-don't use instructions that are specific to GNU Make.
+don't use features or syntax that is specific to GNU Make.
 
 ### Virtual Machine
 When developing an OS it is very convenient to be able to run your code in a
-_virtual machine_ instead of on a physical computer. Bochs [@bochs] is an
+_virtual machine_ instead of on a physical computer, since starting your OS in
+a virtual machine is much faster than getting your OS onto a physical medium
+and then running it on a physical machine.
+Bochs [@bochs] is an
 emulator for the x86 (IA-32) platform which is well suited for OS development
 due to its debugging features. Other popular choices are QEMU [@qemu] and
-VirtualBox [@virtualbox] but this book uses Bochs.
+VirtualBox [@virtualbox]. This book uses Bochs.
 
 ## Booting
 Booting an operating system consists of transferring control along a
@@ -261,7 +267,7 @@ The ISO image `os.iso` now contains the kernel executable, the GRUB
 bootloader and the configuration file.
 
 ### Running Bochs
-The final step is to run the OS in Bochs using the `os.iso` ISO image.
+Now we can run the OS in Bochs using the `os.iso` ISO image.
 Bochs needs a configuration file to start and an example of a simple
 configuration file is given below:
 
@@ -305,9 +311,9 @@ output then your OS has successfully booted!
 
 ## Further Reading
 - Gustavo Duertes has written an in-depth article about what actually happens
-  when a computer boots up,
+  when a x86 computer boots up,
   <http://duartes.org/gustavo/blog/post/how-computers-boot-up>
 - Gustavo continues to describe what the kernel does in the very early
   stages at <http://duartes.org/gustavo/blog/post/kernel-boot-process>
-- The OSDev wiki also contains a nice article about booting a computer:
+- The OSDev wiki also contains a nice article about booting an x86 computer:
   <http://wiki.osdev.org/Boot_Sequence>

@@ -1,18 +1,19 @@
 # Interrupts and Input
-Now that the OS can produce _output_ it would be nice if it also could get some
-_input_. In order to read information from the keyboard the operating system
-must be able to handle _interrupts_. An interrupt occurs when a hardware
-device, such as the keyboard, the serial port or the timer, signals the CPU
-that the state of the device has changed. The CPU itself can also send
-interrupts due to program errors, for example when a program references memory
-it doesn't has access to, or when a program divides a number by zero. Finally,
-there are also _software intterupts_, which are interrupts that are caused by
-the `int` assembly instruction, and they are often used for system calls.
+Now that the OS can produce _output_ it would be nice if
+it also could get some _input_. (The operating system must be able to handle
+_interrupts_ in order to read information from the keyboard). An interrupt
+occurs when a hardware device, such as the keyboard, the serial port or the
+timer, signals the CPU that the state of the device has changed. The CPU itself
+can also send interrupts due to program errors, for example when a program
+references memory it doesn't has access to, or when a program divides a number
+by zero. Finally, there are also _software intterupts_, which are interrupts
+that are caused by the `int` assembly instruction, and they are often used for
+system calls.
 
 ## Interrupts Handlers
 Interrupts are handled via the _Interrupt Descriptor Table_ (IDT). The IDT
 describes a handler for each interrupt. The interrupts are numbered (0 - 255)
-and the handler for interrupt _i_ is defined at the _i:th_ position in the
+and the handler for interrupt _i_ is defined at the _ith_ position in the
 table. There are three different kinds of handlers for interrupts:
 
 - Task handler
@@ -74,7 +75,7 @@ instead of using bytes (or unsigned integers) use packed structures to make the
 code more readable.
 
 ## Handling an Interrupt
-When the interrupt occurs the CPU will push information about the interrupt on
+When an interrupt occurs the CPU will push information about the interrupt onto
 the stack, then look up the appropriate interrupt hander in the IDT and jump to
 it. The stack at the time of the interrupt will look like the following:
 
@@ -86,8 +87,8 @@ it. The stack at the time of the interrupt will look like the following:
 ~~~
 
 The reason for the question mark behind error code is that not all interrupts
-create an error code. The CPU interrupts that put an error code on the stack
-are 8, 10, 11, 12, 13, 14 and 17.
+create an error code. The specific CPU interrupts that put an error code on the
+stack are 8, 10, 11, 12, 13, 14 and 17.
 
 Once the interrupt handler is done, it uses the `iret` instruction to
 return. The instruction `iret` expects the stack to be the same as at the time
@@ -97,12 +98,12 @@ restores `eflags` by popping the value from the stack and then finally jumps to
 `cs:eip` as specified by the values on the stack.
 
 The interrupt handler has to be written in assembly, since all registers that
-the interrupt handlers uses must be pushed on the stack. This is because the
-code that was interrupted doesn't know about the interrupt and will therefore
-expect that its registers stay the same.
-Writing all the logic of the interrupt handler in assembly will be tiresome.
-Creating an assembly handler that saves the registers, calls a C
-function, restores the registers and finally executes `iret` is a good idea!
+the interrupt handlers uses must be preserved by pushing them onto the stack.
+This is because the code that was interrupted doesn't know about the interrupt
+and will therefore expect that its registers stay the same. Writing all the
+logic of the interrupt handler in assembly will be tiresome. Creating an
+assembly handler that saves the registers, calls a C function, restores the
+registers and finally executes `iret` is a good idea!
 
 The C handler should get the state of the registers, the state of the stack and
 the number of the interrupt as arguments. The following definitions can for
@@ -233,7 +234,7 @@ hardware to interrupts. The reasons for configuring the PIC are:
 - Set up the correct mode for the PIC.
 
 In the beginning there was only one PIC (PIC 1) and eight interrupts. As more
-hardware were added to the computer, 8 interrupts were too few. The solution
+hardware were added, 8 interrupts were too few. The solution
 chosen was to chain on another PIC (PIC 2) on the first PIC (see interrupt 2 on
 PIC 1).
 
@@ -258,9 +259,8 @@ message to the PIC confirming that the interrupt has been handled. If this
 isn't done the PIC won't generate any more interrupts.
 
 Acknowledging a PIC interrupt is done by sending the byte `0x20` to the PIC
-that raised the interrupt. Sending the acknowledgement to the PIC that did
-_not_ raise the interrupt doesn't do anything. Implementing a `pic_acknowledge`
-function can thus be done as follows:
+that raised the interrupt. Implementing a `pic_acknowledge` function can thus
+be done as follows:
 
 ~~~ {.c}
     #include "io.h"
@@ -268,15 +268,29 @@ function can thus be done as follows:
     #define PIC1_PORT_A 0x20
     #define PIC2_PORT_A 0xA0
 
+    /* The PIC interrupts have been remapped */
+    #define PIC1_START_INTERRUPT 0x20
+    #define PIC2_START_INTERRUPT 0x28
+    #define PIC2_END_INTERRUPT   PIC2_START_INTERRUPT + 7
+
     #define PIC_ACK     0x20
 
     /** pic_acknowledge:
      *  Acknowledges an interrupt from either PIC 1 or PIC 2.
+     *
+     *  @param num The number of the interrupt
      */
-    void pic_acknowledge(void)
+    void pic_acknowledge(unsigned integer interrupt)
     {
-        outb(PIC1_PORT_A, PIC_ACK);
-        outb(PIC2_PORT_A, PIC_ACK);
+        if (interrupt < PIC1_START_INTERRUPT || interrupt > PIC2_END_INTERRUPT) {
+          return;
+        }
+
+        if (interrupt < PIC2_START_INTERRUPT) {
+          outb(PIC1_PORT_A, PIC_ACK);
+        } else {
+          outb(PIC2_PORT_A, PIC_ACK);
+        }
     }
 ~~~
 
@@ -311,7 +325,7 @@ tutorial [@scancodes].
 
 Remember, since the keyboard interrupt is raised by the PIC, you must call
 `pic_acknowledge` at the end of the keyboard interrupt handler. Also, the
-keyboard will not send you any more interrupts until you read read the scan
+keyboard will not send you any more interrupts until you read the scan
 code from the keyboard.
 
 ## Further Reading

@@ -3,13 +3,13 @@
 Now that the kernel boots, prints to screen and reads from keyboard - what do
 we do? Usually, a kernel is not supposed to do the application logic itself,
 but leave that for applications. The kernel creates the proper
-abstractions (for memory, files, devices, etc.) to make application development
+abstractions (for memory, files, devices) to make application development
 easier, performs tasks on behalf of applications (system calls) and
 [schedules processes](#scheduling).
 
 User mode, in contrast with kernel mode, is the environment in which the user's
 programs execute. This environment is less privileged than the kernel, and will
-prevent badly written user programs from messing with other programs or the
+prevent (badly written) user programs from messing with other programs or the
 kernel. Badly written kernels are free to mess up what they want.
 
 There's quite a way to go until the OS created in this book can execute
@@ -78,10 +78,11 @@ it an argument for `kmain`.
 
 ### A Very Simple Program
 
-Any program we write at this stage won't be able to do much. Therefore, a very
-short program that writes a value to a register suffices. Halting Bochs and
-reading the log should verify that the program has run. Below follows an
-example of such a short program:
+A program written at this stage can only perform a few actions. Therefore, a
+very short program that writes a value to a register suffices as a test
+program. Halting Bochs after a while and then check that register contains the
+correct number by looking in the Bochs log will verify that the program has
+run. This is an example of such a short program:
 
 ~~~ {.nasm}
     ; set eax to some distinguishable number, to read from the log afterwards
@@ -106,7 +107,7 @@ This is all we need. You must now move the file `program` to the folder
 
 ### Finding the Program in Memory
 Before jumping to the program we must find where it resides in memory.
-Assuming that the contents of the `ebx` is passed as an argument to `kmain`, we
+Assuming that the contents of `ebx` is passed as an argument to `kmain`, we
 can do this entirely from C.
 
 The pointer in `ebx` points to a _multiboot_ structure [@multiboot]. Download the
@@ -114,7 +115,7 @@ The pointer in `ebx` points to a _multiboot_ structure [@multiboot]. Download th
 <http://www.gnu.org/software/grub/manual/multiboot/html_node/multiboot.h.html>,
 which describes the structure.
 
-The pointer passed to `kmain` from the `ebx` register can now be casted to a
+The pointer passed to `kmain` in the `ebx` register can be casted to a
 `multiboot_info_t` pointer. The address of the first module is in the field
 `mods_addr`. The following code shows an example:
 
@@ -133,10 +134,10 @@ field of the `multiboot_info_t` structure. You should also check the field
 structure, see the multiboot documentation [@multiboot].
 
 ### Jumping to the Code
-The only thing left to do is to jump to the code loaded by GRUB.
-Since it is easier to parse the multiboot structure in C, calling the code from
-C is more convenient (it can of course be done with `jmp` or `call` in
-assembly as well). The C code could look like the following:
+The only thing left to do is to jump to the code loaded
+by GRUB.  Since it is easier to parse the multiboot structure in C than
+assembly, calling the code from C is more convenient (it can of course be done
+with `jmp` or `call` in assembly as well). The C code could look like this:
 
 ~~~ {.c}
     typedef void (*call_module_t)(void);
@@ -155,8 +156,8 @@ the program, and then halt Bochs, we should see `0xDEADBEEF` in the register
 The program we've written now runs at the same privilege level as the kernel -
 we've just entered it in a somewhat peculiar way. To enable applications to
 execute at a different privilege level we'll need to do
-[segmentation](#segmentation), [paging](#paging) and [page frame
-allocation](#page-frame-allocation).
+[_segmentation_](#segmentation), [_paging_](#paging) and [_page frame
+allocation_](#page-frame-allocation).
 
 It's quite a lot of work and technical details to go through, but in a few
 chapters you'll have working user mode programs.

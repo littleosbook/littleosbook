@@ -7,10 +7,11 @@ _logical address_: 16 bits that specifies the segment and 32-bits that
 specifies what offset within that segment you want. The offset is added to the
 base address of the segment, and the resulting linear address is checked
 against the segment's limit - see the figure below. If everything works out
-fine (including access-right checks ignored for now) the result is a _linear
-address_. If paging is disabled (paging is described in the chapter
-["Paging"](#paging)), then the linear address space is mapped 1:1 onto the
-_physical address_ space, and the physical memory can be accessed.
+fine (including access-rights checks ignored for now) the result is a _linear
+address_. When paging is disabled, then
+the linear address space is mapped 1:1 onto the _physical address_ space, and
+the physical memory can be accessed. (See the chapter ["Paging"](#paging) for
+how to enable paging.)
 
 ![Translation of logical addresses to linear addresses.
 ](images/intel_3_5_logical_to_linear.png)
@@ -78,7 +79,7 @@ Therefore, two segments are needed: one segment for executing code to put in
 `cs` (Type is Execute-only or Execute-Read) and one segment for reading and
 writing data (Type is Read/Write) to put in the other segment registers.
 
-The DPL specifies the privilege levels required to use the segment. x86
+The DPL specifies the _privilege levels_ required to use the segment. x86
 allows for four privilege levels (PL), 0 to 3, where PL0 is the most
 privileged. In most operating systems (eg. Linux and Windows), only PL0 and PL3
 are used. However, some operating system, such as MINIX, make use of all

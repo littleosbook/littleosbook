@@ -1,18 +1,16 @@
 # Introduction
 
-## What Is This Book About?
-
 This book is a practical guide to writing your own x86 operating system. It is
-designed to not give too much away with samples and code excerpts, but still
-give enough help with the technical details. We've tried to collect parts of
-the vast (and often excellent) expanse of material and tutorials available, on
-the web and otherwise, and add our own insights into the problems we
-encountered and struggled with.
+designed give enough help with the technical details while at the same time not
+reveal too much with samples and code excerpts. We've tried to collect
+parts of the vast (and often excellent) expanse of material and tutorials
+available, on the web and otherwise, and add our own insights into the problems
+we encountered and struggled with.
 
 This book is not about the theory behind operating systems, or how any specific
 operating system (OS) works. For OS theory we recommend the book _Modern
 Operating Systems_ by Andrew Tanenbaum [@ostanenbaum]. Lists and details on
-current operating systems are available on the internet.
+current operating systems are available on the Internet.
 
 The starting chapters are quite detailed and explicit, to quickly get you into
 coding. Later chapters give more of an outline of what is needed, as more and
@@ -25,7 +23,7 @@ give a deeper understanding of the topics covered.
 
 The reader of this book should be comfortable with UNIX/Linux, systems
 programming and the C language. This book could be a way to get
-started learning those things, but it will be more difficult and developing an
+started learning those things, but it will be more difficult, and developing an
 operating system is already challenging on its own. Search engines and other
 tutorials are often helpful if you get stuck.
 

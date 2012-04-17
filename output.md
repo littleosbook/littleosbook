@@ -27,7 +27,7 @@ parameters: the address of the I/O port and the data to send. The instruction
 from the hardware. One can think of I/O ports as communicating with hardware
 the same way as you communicate with a server using sockets. The cursor (the
 blinking rectangle) of the framebuffer is one example of hardware controlled
-via I/O ports.
+via I/O ports on a PC.
 
 ## The Framebuffer
 The framebuffer is a hardware device that is capable of displaying a buffer of
@@ -196,7 +196,7 @@ Moving the cursor can now be wrapped in a C function:
 ### The Driver
 The driver should provide an interface that the rest of the code in the OS will
 use for interacting with the framebuffer.  There is no right or wrong in what
-functionality the interface should provide, but one suggestion is to have a
+functionality the interface should provide, but a suggestion is to have a
 `write` function with the following declaration:
 
 ~~~ {.c}
@@ -208,17 +208,19 @@ the screen. The `write` function should automatically advance the cursor after a
 character has been written and scroll the screen if necessary.
 
 ## The Serial Ports
-The serial port [@wiki:serial] is an interface for communicating between
-hardware devices and it is usually not available on modern computers. The
-serial port is easy to use, and, more importantly, it can be used as a logging
-utility in Bochs. A computer usually has several serial ports, but we will only
-make use of one of the ports, since we only will use the serial ports for
-logging. Furthermore, we will only use the serial ports for output, not input.
-The serial ports are completely controlled via I/O ports.
+The serial port [@wiki:serial] is an interface for
+communicating between hardware devices and although it is available on almost
+all motherboards, it is seldom exposed to the user in the form of a DE-9
+connector nowadays. The serial port is easy to use, and, more importantly, it
+can be used as a logging utility in Bochs. If a computer has support for a
+serial port, then it usually has support for multiple serial ports, but we will
+only make use of one of the ports. This is because we will only use the serial
+ports for logging. Furthermore, we will only use the serial ports for output,
+not input. The serial ports are completely controlled via I/O ports.
 
 ### Configuring the Serial Port
-The first data that needs to be sent to the serial port is configuration
-data. In order for two hardware devices to be able to talk each other they
+The first data that need to be sent to the serial port is configuration
+data. In order for two hardware devices to be able to talk to each other they
 must agree upon a couple of things. These things include:
 
 - The speed used for sending data (bit or baud rate)
@@ -228,7 +230,7 @@ must agree upon a couple of things. These things include:
 ### Configuring the Line
 Configuring the line means to configure how data is being sent over the line.
 The serial port has an I/O port, the _line command port_, that is used for
-configuring the line.
+configuration.
 
 First the speed for sending data will be set. The serial port has an internal
 clock that runs at 115200 Hz. Setting the speed means sending a divisor to the
@@ -290,7 +292,7 @@ via the line command port by sending a byte. The layout of the 8 bits looks
 like the following:
 
     Bit:     | 7 | 6 | 5 4 3 | 2 | 1 0 |
-    Content: | d | b | prty  | s | exp |
+    Content: | d | b | prty  | s | dl  |
 
 A description for each name can be found in the table below:
 
@@ -298,9 +300,9 @@ A description for each name can be found in the table below:
 ----- ------------
     d Enables (`d = 1`) or disables (`d = 0`) DLAB
     b If break control is enabled (`b = 1`) or disabled (`b = 0`)
- prty The number of parity bits to use (`prty = 0, 1, 2 or 3`)
+ prty The number of parity bits to use
     s The number of stop bits to use (`s = 0` equals 1, `s = 1` equals 1.5 or 2)
-  exp Describes the length of the data, the length is `2^exp` (`exp = 3` results in 8 bits)
+   dl Describes the length of the data
 
 We will use the mostly standard value `0x03` [@osdev:serial], meaning a length
 of 8 bits, no parity bit, one stop bit and break control disabled. This is sent
@@ -317,7 +319,7 @@ to the line command port, as seen in the following example:
     void serial_configure_line(unsigned short com)
     {
         /* Bit:     | 7 | 6 | 5 4 3 | 2 | 1 0 |
-         * Content: | d | b | prty  | s | exp |
+         * Content: | d | b | prty  | s | dl  |
          * Value:   | 0 | 0 | 0 0 0 | 0 | 1 1 | = 0x03
          */
         outb(SERIAL_LINE_COMMAND_PORT(com), 0x03);
@@ -445,27 +447,28 @@ Writing to a serial port means spinning as long as the transmit FIFO queue
 isn't empty, and then writing the data to the data I/O port.
 
 ### Configuring Bochs
-You must use the Bochs configuration file, `bochsrc.txt`, to instruct Bochs to
-save the output from the first serial port to a file. This can be done with the
-`com1` configuration parameter:
+To save the output from the first serial serial port the Bochs configuration
+file `bochsrc.txt` must be updated.
+The `com1` configuration instructs Bochs how to handle first
+serial port:
 
 ~~~
-    com1: enabled=1, mode=file, dev=com1.out"
+    com1: enabled=1, mode=file, dev=com1.out
 ~~~
 
 The output from serial port one will now be stored in the file `com1.out`.
 
 ### The Driver
 We recommend that you implement a `write` function for the serial port similar
-to what you did for the framebuffer. To avoid name clashes with the `write`
-function for the framebuffer you might want to name the functions `fb_write`
-and `serial_write` to distinguish them.
+to the `write` function in the driver for the framebuffer. To avoid name
+clashes with the `write` function for the framebuffer it is a good idea to name
+the functions `fb_write` and `serial_write` to distinguish them.
 
 We further recommend that you try to write a `printf`-like function, see
 section 7.3 in [@knr]. The `printf` function could take an additional argument
 to decide to which device to write the output (framebuffer or serial).
 
-A good idea is to create some way of
+A final recommendation is that you create some way of
 distinguishing the severeness of the log messages, for example by prepending
 the messages with `DEBUG`, `INFO` or `ERROR`.
 

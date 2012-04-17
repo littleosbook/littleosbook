@@ -153,10 +153,8 @@
           </group>
         </else-if>
         <else>
-          <group delimiter=", ">
-            <text variable="title" font-style="italic"/>
+            <text variable="title" font-style="italic" suffix=", "/>
             <text variable="url"/>
-          </group>
         </else>
       </choose>
     </layout>

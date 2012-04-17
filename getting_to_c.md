@@ -6,7 +6,7 @@ the authors, C is a much more convenient language to use. Therefore, we would
 like to use C as much as possible and only assembly where it make sense.
 
 ## Setting Up a Stack
-One prerequisite for using C is a stack, since all non-trivial C programs uses
+One prerequisite for using C is a stack, since all non-trivial C programs use
 a stack.  Setting up a stack is not harder than to make the `esp` register
 point to the end of an area of free memory (remember that the stack grow
 towards lower addresses) that is correctly aligned (alignment on 4 bytes is
@@ -34,8 +34,11 @@ data:
         resb KERNEL_STACK_SIZE                  ; reserve stack for the kernel
 ~~~
 
-We can use uninitialized memory because before any stack location is read from,
-it should be written to.
+There is no need to worry about the use of uninitialized memory for the stack,
+since it is not possible to read a stack location that have not been written.
+A (correct) program can not pop an element from the stack
+without having pushed an element onto the stack. Therefore, the memory
+locations of the stack will always be written to before they are being read.
 
 The stack pointer is then set up by pointing `esp` to the end of the
 `kernel_stack` memory:
@@ -94,11 +97,12 @@ configurations, it is much more convenient to use "packed structures":
 
 When using the struct in the previous example there is no guarantee that the
 size of the `struct` will be exactly 32 bits - the compiler can add some
-padding between elements to speed up element access. When using a `struct` to
-represent configuration bytes, it is very important that the compiler does
-_not_ add any padding, because the struct will eventually be treated as an
-unsigned integer by the hardware. The attribute `packed` can be used to force
-GCC to _not_ add any padding:
+padding between elements for various reasons, for example to speed up element
+access or due to requirements set by the operating system. When using a
+`struct` to represent configuration bytes, it is very important that the
+compiler does _not_ add any padding, because the struct will eventually be
+treated as a 32 bit unsigned integer by the hardware. The attribute `packed`
+can be used to force GCC to _not_ add any padding:
 
 ~~~ {.C}
     struct example {

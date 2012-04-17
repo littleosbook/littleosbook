@@ -10,19 +10,20 @@ Paging is the most common technique used in x86 to enable virtual memory.
 Virtual memory through paging means that each process will get the impression
 that the available memory range is `0x00000000` - `0xFFFFFFFF` even though the
 actual size of the memory might be much less. It also means that when a process
-addresses a byte of memory they will use a virtual (linear) address instead of
+addresses a byte of memory it will use a virtual (linear) address instead of
 physical one. The code in the user process won't notice any difference (except
 for execution delays). The linear address gets translated to a physical address
 by the MMU and the page table. If the virtual address isn't mapped to a
 physical address, the CPU will raise a page fault interrupt.
 
-Paging is optional, and some operating systems don't need it. But if we want
-memory access control (so that we can have processes running in different
+Paging is optional, and some operating systems do not make use of it. But if we
+want to mark certain areas of memory accessible only to code running at a
+certain privilege level (to be able to have processes running at different
 privilege levels), paging is the neatest way to do it.
 
 ## Paging in x86
 
-x86 paging (chapter 4 in the Intel manual [@intel3a]) consists of a _page
+Paging in x86 (chapter 4 in the Intel manual [@intel3a]) consists of a _page
 directory_ (PDT) that can contain references to 1024 _page tables_ (PT), each of
 which can point to 1024 sections of physical memory called _page frames_ (PF).
 Each page frame is 4096 byte large. In a virtual (linear) address, the
@@ -43,10 +44,11 @@ so a page directory and page table both fit in a page frame themselves.
 The translation of linear addresses to physical addresses is described in
 the figure below.
 
-It is also possible to use 4 MB pages. A PDE then points directly to a 4 MB page
-frame, which needs to be aligned on a 4 MB address boundary. The address
-translation is almost the same as in the figure, with just the page table step
-removed. It is possible to mix 4 MB and 4 KB pages.
+While pages are normally 4096 bytes, it is also possible to use 4 MB pages. A
+PDE then points directly to a 4 MB page frame, which needs to be aligned on a 4
+MB address boundary. The address translation is almost the same as in the
+figure, with just the page table step removed. It is possible to mix 4 MB and 4
+KB pages.
 
 ![Translating virtual addresses (linear addresses) to physical addresses.
 ](images/intel_4_2_linear_address_translation.png)
@@ -70,8 +72,8 @@ ordinary assembly instructions.
 
 ### Enabling Paging
 
-You enable paging by first writing the address of a page directory to `cr3` and
-then setting bit 31 (the PG "paging-enable" bit) of `cr0` to `1`. If you want 4
+Paging is enabled by first writing the address of a page directory to `cr3` and
+then setting bit 31 (the PG "paging-enable" bit) of `cr0` to `1`. To use 4
 MB pages, set the PSE bit (Page Size Extensions, bit 4) of `cr4`. The following
 assembly code shows an example:
 
@@ -93,13 +95,15 @@ assembly code shows an example:
 ### A Few Details
 
 It is important to note that all addresses within the page directory, page
-tables and in `cr3` needs to be physical addresses to the structures, never
+tables and in `cr3` need to be physical addresses to the structures, never
 virtual. This will be more relevant in later sections where we dynamically
 update the paging structures (see the chapter ["User Mode"](#user-mode)).
 
 An instruction that is useful when an updating a PDT or PT is `invlpg`. It
 invalidates the _Translation Lookaside Buffer_ (TLB) entry for a virtual
-address. This is only required when changing a PDE or PTE that was previously
+address. The TLB is a cache for translated addresses, mapping physical
+addresses corresponding to virtual addresses.
+This is only required when changing a PDE or PTE that was previously
 mapped to something else. If the PDE or PTE had previously been marked as not
 present (bit 0 was set to 0), executing `invlpg` is unnecessary. Changing the
 value of `cr3` will cause all entries in the TLB to be invalidated.
@@ -112,7 +116,7 @@ An example of invalidating a TLB entry is shown below:
 ~~~
 
 ## Paging and the Kernel
-The following section will describe how paging affects the OS kernel. We
+This section will describe how paging affects the OS kernel. We
 encourage you to run your OS using identity paging before trying to implement a
 more advanced paging setup, since it can be hard to debug a malfunctioning
 page table that is set up via assembly.
@@ -145,10 +149,14 @@ Preferably, the kernel should be placed at a very high virtual memory address,
 for example `0xC0000000` (3 GB). The user mode process is not likely to
 be 3 GB large, which is now the only way that it can conflict with the
 kernel. When the kernel uses virtual addresses at 3 GB and above it is called a
-_higher-half kernel_.
+_higher-half kernel_. `0xC0000000` is just an example, the kernel can be placed
+at any address higher than 0 to get the same benefits. Choosing the correct
+address depends on how much virtual memory should be available for the kernel
+(it is easiest if all memory above the kernel virtual address should belong to the
+kernel) and how much virtual memory should be available for the process.
 
 If the user mode process is larger than 3 GB, some pages will need to be
-swapped out by the kernel. Swapping pages will not be part of this book.
+swapped out by the kernel. Swapping pages is not part of this book.
 
 ### Placing the Kernel at `0xC0100000`
 
