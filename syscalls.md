@@ -28,7 +28,7 @@ allow PL3 access.
 Whenever inter-privilege level interrupts occur, the processor pushes a few
 important registers onto the stack - the same ones we used to enter user mode
 [before](#user-mode), see figure 6-4, section 6.12.1, in the Intel manual
-[@intel3a]. What stack is used? The same section in the Intel manual [@intel3a]
+[@intel3a]. What stack is used? The same section in [@intel3a]
 specifies that if an interrupt leads to code executing at a numerically lower
 privilege level, a stack switch occurs. The new values for the registers `ss`
 and `esp` is loaded from the current Task State Segment (TSS). The TSS
@@ -39,7 +39,7 @@ To enable system calls we need to setup a TSS before entering user mode.
 Setting it up can be done in C by setting the `ss0` and `esp0` fields of a
 "packed struct" that represents a TSS. Before loading the "packed struct" into
 the processor, a TSS descriptor has to be added to the GDT. The structure of
-the TSS descriptor is described in section 7.2.2 of the Intel manual [@intel3a].
+the TSS descriptor is described in section 7.2.2 in [@intel3a].
 
 You specify the current TSS segment selector by loading it into the `tr`
 register with the `ltr` assembly instruction. If the TSS segment descriptor has
