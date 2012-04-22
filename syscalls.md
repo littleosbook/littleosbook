@@ -8,16 +8,17 @@ design requires some thought.
 
 It is up to us, the kernel developers, to design the system calls that
 application developers can use. We can draw inspiration from the POSIX
-standards or, if they seem a bit too much, just look at the ones for Linux, and
-pick and choose. See the section ["Further Reading"](#further-reading-7) at the
-end of the chapter for references.
+standards or, if they seem like too much work, just look at the ones for Linux,
+and pick and choose. See the section ["Further Reading"](#further-reading-7) at
+the end of the chapter for references.
 
 ## Implementing System Calls
 
-System calls are traditionally implemented with software interrupts. The user
+System calls are traditionally invoked with software interrupts. The user
 applications put the appropriate values in registers or on the stack and then
 initiates a pre-defined interrupt which transfers execution to the kernel. The
-interrupt number used is dependent on the kernel, Linux uses `0x80` for example.
+interrupt number used is dependent on the kernel, Linux uses the number `0x80`
+to identify that an interrupt is intended as a system call.
 
 When system calls are executed, the current privilege level is typically
 changed from PL3 to PL0 (if the application is running in user mode). To allow
@@ -25,7 +26,7 @@ this, the DPL of the entry in the IDT for the system call interrupt needs to
 allow PL3 access.
 
 Whenever inter-privilege level interrupts occur, the processor pushes a few
-important registers on the stack - the same ones we used to enter user mode
+important registers onto the stack - the same ones we used to enter user mode
 [before](#user-mode), see figure 6-4, section 6.12.1, in the Intel manual
 [@intel3a]. What stack is used? The same section in the Intel manual [@intel3a]
 specifies that if an interrupt leads to code executing at a numerically lower
@@ -47,7 +48,7 @@ loaded into the register `tr`.
 
 When we entered user mode before in the chapter ["Entering User
 Mode"](#entering-user-mode) we disabled interrupts when executing in PL3. Since
-system calls are implemented using interrupts, you need to enable interrupts in
+system calls are implemented using interrupts, interrupts must be enabled in
 user mode. Setting the IF flag bit in the `eflags` value on the stack will make
 `iret` enable interrupts (since the `eflags` value on the stack will be loaded
 into the `eflags` register by the assembly instruction `iret`).

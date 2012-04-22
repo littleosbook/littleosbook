@@ -1,8 +1,9 @@
 # User Mode
 
 User mode is now almost within our reach, there are just a few more steps
-required to get there. They don't seem too much work on paper, but they can
-take quite a few hours to get right in code and design.
+required to get there. Although these steps might seem easy they way they
+are presented in this chapter, they can be tricky to implement, since there are
+a lot of places where small errors will cause bugs that are hard to find.
 
 ## Segments for User Mode
 
@@ -27,20 +28,23 @@ paging.
 
 There are a few things every user mode process needs:
 
-- Page frames for code, data and stack. For now we can just allocate one page frame
-  for the stack, and enough page frames to fit the program's code.
+- Page frames for code, data and stack. At the moment it suffices to allocate
+  one page frame for the stack and enough page frames to fit the program's
+  code. Don't worry about setting up a stack that can be grow and shrink at
+  this point in time, focus on getting a basic implementation work first.
 
-- We need to copy the binary from the GRUB module to the page frames used for
-  the program's code.
+- The binary from the GRUB module has to be copied to the page frames used for
+  the programs code.
 
-- We need a page directory and page tables to map these page frames into
-  memory. At least two page tables are needed, because the code and data should
-  be mapped in at `0x00000000` and increasing, and the stack should start just
-  below the kernel, at `0xBFFFFFFB`, growing towards lower addresses. Make sure
-  the U/S flag is set to allow PL3 access.
+- A page directory and page tables are needed to map the page frames described
+  above into memory. At least two page tables are needed, because the code and
+  data should be mapped in at `0x00000000` and increasing, and the stack should
+  start just below the kernel, at `0xBFFFFFFB`, growing towards lower
+  addresses. The U/S flag has to be set to allow PL3 access.
 
 It might be convenient to store this information in a `struct` representing a
-process, which can be dynamically allocated with the kernel's `malloc` function.
+process. This process `struct` can be dynamically allocated with the
+kernel's `malloc` function.
 
 ## Entering User Mode
 
@@ -49,8 +53,7 @@ privilege level (CPL) is to execute an `iret` or `lret` instruction - interrupt
 return or long return, respectively.
 
 To enter user mode we set up the stack as if the processor had raised an
-inter-privilege level interrupt. The stack should look like the following
-figure:
+inter-privilege level interrupt. The stack should look like the following:
 
 ~~~
     [esp + 16]  ss      ; the stack segment selector we want for user mode
@@ -68,23 +71,23 @@ the corresponding registers. Before we execute `iret` we need to change to the
 page directory we setup for the user mode process. It is important to remember
 that to continue executing kernel code after we've switched PDT, the kernel
 needs to be mapped in. One way to accomplish this is to have a separate PDT for
-the kernel,
-which maps all data at `0xC0000000` and above, and merge it with the
-user PDT (which only maps below `0xC0000000`) when performing the switch.
-Remember that you need to use the physical address for the PDT when you set `cr3`.
+the kernel, which maps all data at `0xC0000000` and above, and merge it with
+the user PDT (which only maps below `0xC0000000`) when performing the switch.
+Remember that physical address of the PDT has to be used when setting the
+register `cr3`.
 
 The register `eflags` contains a set of different flags, specified in
 section 2.3 of the Intel manual [@intel3a]. Most important for us is the
-interrupt enable (IF) flag. The assembly instruction`sti` can't be used in
-privilege level 3 to enable interrupts. If interrupts are disabled when
+interrupt enable (IF) flag. The assembly instruction `sti` can't be used in
+privilege level 3 for enabling interrupts. If interrupts are disabled when
 entering user mode, then interrupts can't enabled once user mode is entered.
 Setting the IF flag in the `eflags` entry on the stack will enable interrupts
-in user mode, since the register `eflags` will be to the `eflags` value on the
-stack by assembly instruction `iret`.
+in user mode, since the assembly instruction `iret` will set the register
+`eflags` to the corresponding value on the stack.
 
 For now, we should have interrupts disabled, as it requires a little more
 work to get inter-privilege level interrupts to work properly (see the
-section ["System calls"](#system-calls).
+section ["System calls"](#system-calls)).
 
 The value `eip` on the stack should point to the entry point for the user code
 - `0x00000000` in our case. The value `esp` on the stack should be where the
@@ -108,23 +111,26 @@ The register `ds`, and the other data segment registers, should be set to the
 same segment selector as `ss`. They can be set the ordinary way, with the `mov`
 assembly instruction.
 
-You are now ready to execute `iret`. If everything has been set up right, you
+We are now ready to execute `iret`. If everything has been set up right, we
 should now have a kernel that can enter user mode.
 
 ## Using C for User Mode Programs
 
-The kernel is compiled as an ELF [@wiki:elf] binary, which is a format that
-features for more functionality than flat binary. The reason we can use
-ELF for the kernel is that GRUB knows how to parse the ELF structure.
+When C is used as the programming language for user mode programs, it is
+important to think about the structure of the file that will be the result of
+the compilation.
 
-If we implement an ELF parser, we can compile the user mode programs into ELF
+The reason we can use ELF [@wiki:elf] as the file format for for the kernel
+executable is because GRUB knows how to parse and interpret the ELF file format.
+If we implemented an ELF parser, we could compile the user mode programs into ELF
 binaries as well. We leave this as an exercise for the reader.
 
 One thing we can do to make it easier to develop user mode programs is to allow
-them to be written in C, but still compile them to flat binaries. In C the
-layout of the generated code is more unpredictable and the entry point, `main`,
-might not be at offset 0. One way to work around this is to add a few assembly
-lines placed at offset 0 which calls `main`:
+the programs to be written in C, but compile them to flat binaries instead of
+ELF binaries. In C the layout of the generated code is more unpredictable and
+the entry point, `main`, might not be at offset 0 in the binary. One common way
+to work around this is to add a few assembly lines placed at offset 0 which
+calls `main`:
 
 ~~~ {.nasm}
     extern main
@@ -182,13 +188,16 @@ When we compile user programs we want the following GCC flags:
 For linking, the followings flags should be used:
 
 ~~~
-    -T link.ld -melf_i386  # emulate 32 bits ELF, the binary output is specified in the linker script
+    -T link.ld -melf_i386  # emulate 32 bits ELF, the binary output is specified
+                           # in the linker script
 ~~~
+
+The option `-T` instructs the linker to use the linker script `link.ld`.
 
 ### A C Library
 
-It might now be interesting to start thinking about writing a small standard
-library for your programs. Some of the functionality requires [system
+It might now be interesting to start thinking about writing a small "standard
+library" for your programs. Some of the functionality requires [system
 calls](#system-calls) to work, but some, such as the functions in `string.h`,
 does not.
 

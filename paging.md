@@ -158,7 +158,12 @@ kernel) and how much virtual memory should be available for the process.
 If the user mode process is larger than 3 GB, some pages will need to be
 swapped out by the kernel. Swapping pages is not part of this book.
 
-### Placing the Kernel at `0xC0100000`
+### Placing the Kernel at `0xC0000000`
+To start with, it is better to place the kernel at `0xC0100000` than
+`0xC0000000`, since this makes it possible to map (`0x00000000`, `0x00100000`)
+to (`0xC0000000`, `0xC0100000`). This way, the entire range (`0x00000000`,
+`"size of kernel"`) of memory is mapped to the range
+(`0xC0000000`, `0xC0000000  + "size of kernel"`).
 
 Placing the kernel at `0xC0100000` isn't hard, but it does require some
 thought. This is once again a linking problem.  When the linker resolves all
@@ -225,10 +230,11 @@ We can modify the [first linker script](#linking-the-kernel) to implement this:
 When GRUB jumps to the kernel code, there is no paging table.  Therefore, all
 references to `0xC0100000 + X` won't be mapped to the correct physical address,
 and will therefore cause a general protection exception (GPE) at the very best,
-otherwise (if the computer has more than 3 GB of memory) the OS will just crash.
+otherwise (if the computer has more than 3 GB of memory) the computer will just
+crash.
 
-Therefore, assembly code that doesn't use relative jumps must be used to do the
-following:
+Therefore, assembly code that doesn't use relative jumps or relative memory
+addressing must be used to do the following:
 
 - Set up a page table.
 - Add identity mapping for the first 4 MB of the virtual address space.
@@ -275,7 +281,7 @@ changed to reflect the new virtual addresses as well.
 Mapping 4 MB pages for the kernel is simple, but wastes memory (unless you have
 a really big kernel). Creating a higher-half kernel mapped in as 4 KB pages
 saves memory but is harder to set up. Memory for the page directory and one
-page table can be reserved in the `.data` section, but you need to configure
+page table can be reserved in the `.data` section, but one needs to configure
 the mappings from virtual to physical addresses at run-time. The size of the
 kernel can be determined by exporting labels from the linker script
 [@ldcmdlang], which we'll need to do later anyway when writing the page frame
