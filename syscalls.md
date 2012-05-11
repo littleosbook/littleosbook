@@ -42,7 +42,7 @@ the processor, a TSS descriptor has to be added to the GDT. The structure of
 the TSS descriptor is described in section 7.2.2 in [@intel3a].
 
 You specify the current TSS segment selector by loading it into the `tr`
-register with the `ltr` assembly instruction. If the TSS segment descriptor has
+register with the `ltr` assembly code instruction. If the TSS segment descriptor has
 index 5, and thus offset `5 * 8 = 40 = 0x28`, this is the value that should be
 loaded into the register `tr`.
 
@@ -51,7 +51,7 @@ Mode"](#entering-user-mode) we disabled interrupts when executing in PL3. Since
 system calls are implemented using interrupts, interrupts must be enabled in
 user mode. Setting the IF flag bit in the `eflags` value on the stack will make
 `iret` enable interrupts (since the `eflags` value on the stack will be loaded
-into the `eflags` register by the assembly instruction `iret`).
+into the `eflags` register by the assembly code instruction `iret`).
 
 ## Further Reading
 

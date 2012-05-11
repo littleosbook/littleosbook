@@ -2,7 +2,7 @@
 
 _Virtual memory_ is an abstraction of physical memory. The purpose of virtual
 memory is generally to simplify application development and to let processes
-address more memory than what is actually physically present. We also don't
+address more memory than what is actually physically present in the machine. We also don't
 want applications messing with the kernel or other applications' memory due to
 security.
 
@@ -16,7 +16,7 @@ Managing memory is a big part of what an operating system does.
 [Paging](#paging) and [page frame allocation](#page-frame-allocation) deals
 with that.
 
-Segmentation and paging is described in the Intel manual [@intel3a], chapter 3
+Segmentation and paging is described in the [@intel3a], chapter 3
 and 4.
 
 ## Virtual Memory Through Segmentation?

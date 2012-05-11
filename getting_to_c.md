@@ -1,23 +1,23 @@
 # Getting to C
-This chapter will show you how to use C instead of assembly as the programming
+This chapter will show you how to use C instead of assembly code as the programming
 language for the OS. Assembly is very good for interacting with the CPU and
 enables maximum control over every aspect of the code.  However, at least for
 the authors, C is a much more convenient language to use. Therefore, we would
-like to use C as much as possible and only assembly where it make sense.
+like to use C as much as possible and use assembly code only where it make sense.
 
 ## Setting Up a Stack
 One prerequisite for using C is a stack, since all non-trivial C programs use
 a stack.  Setting up a stack is not harder than to make the `esp` register
-point to the end of an area of free memory (remember that the stack grow
-towards lower addresses) that is correctly aligned (alignment on 4 bytes is
+point to the end of an area of free memory (remember that the stack grows
+towards lower addresses on the x86) that is correctly aligned (alignment on 4 bytes is
 recommended from a performance perspective).
 
 We could point `esp` to a random area in memory since, so far, the only thing
 in the memory is GRUB, BIOS, the OS kernel and some memory-mapped I/O.  This is
 not a good idea - we don't know how much memory is available or if the
 area `esp` would point to is used by something else. A better idea is to
-reserve a piece of uninitialized memory in the `bss` section in the ELF
-executable of the kernel. It is better to use the `bss` section instead of the
+reserve a piece of uninitialized memory in the `bss` section in the ELF file
+of the kernel. It is better to use the `bss` section instead of the
 `data` section to reduce the size of the OS executable. Since GRUB understands
 ELF, GRUB will allocate any memory reserved in the `bss` section
 when loading the OS.
@@ -35,9 +35,10 @@ data:
 ~~~
 
 There is no need to worry about the use of uninitialized memory for the stack,
-since it is not possible to read a stack location that have not been written.
+since it is not possible to read a stack location that has not been written
+(without manual pointer fiddling).
 A (correct) program can not pop an element from the stack
-without having pushed an element onto the stack. Therefore, the memory
+without having pushed an element onto the stack first. Therefore, the memory
 locations of the stack will always be written to before they are being read.
 
 The stack pointer is then set up by pointing `esp` to the end of the
@@ -50,7 +51,7 @@ The stack pointer is then set up by pointing `esp` to the end of the
 
 ## Calling C Code From Assembly
 The next step is to call a C function from assembly code. There are many
-different conventions for how to call C code from assembly
+different conventions for how to call C code from assembly code
 [@wiki:ccall]. This book uses the _cdecl_ calling convention, since that is the
 one used by GCC. The cdecl calling convention states that arguments to a
 function should be passed via the stack (on x86). The arguments of the function
@@ -77,7 +78,7 @@ rightmost argument first. The return value of the function is placed in the
 ~~~
 
 ### Packing Structs
-In the rest of book, you will often come across "configuration bytes" that are
+In the rest of this book, you will often come across "configuration bytes" that are
 a collection of bits in a very specific order. Below follows an example with 32
 bits:
 
@@ -95,12 +96,12 @@ configurations, it is much more convenient to use "packed structures":
     };
 ~~~
 
-When using the struct in the previous example there is no guarantee that the
+When using the `struct` in the previous example there is no guarantee that the
 size of the `struct` will be exactly 32 bits - the compiler can add some
 padding between elements for various reasons, for example to speed up element
-access or due to requirements set by the operating system. When using a
+access or due to requirements set by the hardware and/or compiler. When using a
 `struct` to represent configuration bytes, it is very important that the
-compiler does _not_ add any padding, because the struct will eventually be
+compiler does _not_ add any padding, because the `struct` will eventually be
 treated as a 32 bit unsigned integer by the hardware. The attribute `packed`
 can be used to force GCC to _not_ add any padding:
 
@@ -201,8 +202,9 @@ figure:
     |-- Makefile
 ~~~
 
-You should be now able to start the OS in Bochs with the simple command `make
-run`.
+You should now be able to start the OS with the simple command `make
+run`, which will compile the kernel and boot it up in Bochs (as defined in the
+Makefile above).
 
 ## Further Reading
 

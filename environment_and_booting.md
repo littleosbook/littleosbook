@@ -16,7 +16,7 @@ running is to use the same setup as we did, since we know that these tools
 work with the samples provided in this book.
 
 Once Ubuntu is installed, either physical or virtual, the following packages
-needs to be installed using `apt-get`:
+should be installed using `apt-get`:
 
 ~~~ {.bash}
     sudo apt-get install build-essential nasm genisoimage bochs bochs-x
@@ -24,21 +24,24 @@ needs to be installed using `apt-get`:
 
 ### Programming Languages
 The operating system will be developed using the C programming language
-[@knr][@wiki:c]. We use C because developing an OS requires a very precise
+[@knr][@wiki:c], using GCC [@gcc]. We use C because developing an OS requires a very precise
 control of the generated code and direct access to memory. Other languages that
-provides the same features can also be used, but this book will only cover C.
+provide the same features can also be used, but this book will only cover C.
 
-The code will make use of one type attribute that is specific for GCC [@gcc]
-(the meaning of the attribute will be explained later):
+The code will make use of one type attribute that is specific for GCC:
 
 ~~~
     __attribute__((packed))
 ~~~
 
+This attribute allows us to ensure that the compiler uses a memory layout for a
+`struct` exactly as we define it in the code. This is explained in more detail
+in the next chapter.
+
 Due to this attribute, the example code might be hard to compile using a C
 compiler other than GCC.
 
-For writing assembly, we have chosen NASM [@nasm] as the assembler, since we
+For writing assembly code, we have chosen NASM [@nasm] as the assembler, since we
 prefer NASM's syntax over GNU Assembler.
 
 Bash [@wiki:bash] will be used as the scripting language throughout the book.
@@ -49,8 +52,7 @@ operating system. All code examples have been successfully compiled using
 Ubuntu [@ubuntu] versions 11.04 and 11.10.
 
 ### Build System
-GNU Make [@make] has been used when constructing the Makefile examples. We
-don't use features or syntax that is specific to GNU Make.
+Make [@make] has been used when constructing the Makefile examples.
 
 ### Virtual Machine
 When developing an OS it is very convenient to be able to run your code in a
@@ -61,6 +63,11 @@ Bochs [@bochs] is an
 emulator for the x86 (IA-32) platform which is well suited for OS development
 due to its debugging features. Other popular choices are QEMU [@qemu] and
 VirtualBox [@virtualbox]. This book uses Bochs.
+
+By using a virtual machine we cannot ensure that our OS works on real, physical
+hardware. The environment simulated by the virtual machine is designed to be
+very similar to their physical counterparts, and the OS can be tested on one by
+just copying the executable to a CD and finding a suitable machine.
 
 ## Booting
 Booting an operating system consists of transferring control along a
@@ -116,7 +123,7 @@ can be used together with GRUB. The only thing the OS will do is write
 this an OS).
 
 ### Compiling the Operating System
-This part of the OS has to be written in assembly, since C requires a
+This part of the OS has to be written in assembly code, since C requires a
 stack, which isn't available (the chapter ["Getting to C"](#getting-to-c)
 describes how to set one up). Save the following code in a file called
 `loader.s`:
@@ -129,8 +136,8 @@ describes how to set one up). Save the following code in a file called
 
     section .text:                  ; start of the text (code) section
     align 4                         ; the code must be 4 byte aligned
-        dd MAGIC_NUMBER             ; write the magic number
-        dd CHECKSUM                 ; write the checksum
+        dd MAGIC_NUMBER             ; write the magic number to the machine code
+        dd CHECKSUM                 ; and the checksum
 
     loader:                         ; the loader label (defined as entry point in linker script)
         mov eax, 0xCAFEBABE         ; place the number 0xCAFEBABE in the register eax
@@ -267,7 +274,7 @@ The ISO image `os.iso` now contains the kernel executable, the GRUB
 bootloader and the configuration file.
 
 ### Running Bochs
-Now we can run the OS in Bochs using the `os.iso` ISO image.
+Now we can run the OS in the Bochs emulator using the `os.iso` ISO image.
 Bochs needs a configuration file to start and an example of a simple
 configuration file is given below:
 

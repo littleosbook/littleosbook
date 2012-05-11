@@ -20,7 +20,7 @@ program in kernel mode.
 
 Where do we get the external program from? Somehow we need to load the code we
 want to execute into memory. More feature-complete operating systems usually
-have drivers and file systems that enable them load the software from a CD-ROM
+have drivers and file systems that enable them to load the software from a CD-ROM
 drive, a hard disk or other persistent media.
 
 Instead of creating all these drivers and file systems we will use a
@@ -115,7 +115,7 @@ The pointer in `ebx` points to a _multiboot_ structure [@multiboot]. Download th
 <http://www.gnu.org/software/grub/manual/multiboot/html_node/multiboot.h.html>,
 which describes the structure.
 
-The pointer passed to `kmain` in the `ebx` register can be casted to a
+The pointer passed to `kmain` in the `ebx` register can be cast to a
 `multiboot_info_t` pointer. The address of the first module is in the field
 `mods_addr`. The following code shows an example:
 
@@ -136,8 +136,8 @@ structure, see the multiboot documentation [@multiboot].
 ### Jumping to the Code
 The only thing left to do is to jump to the code loaded
 by GRUB.  Since it is easier to parse the multiboot structure in C than
-assembly, calling the code from C is more convenient (it can of course be done
-with `jmp` or `call` in assembly as well). The C code could look like this:
+assembly code, calling the code from C is more convenient (it can of course be done
+with `jmp` or `call` in assembly code as well). The C code could look like this:
 
 ~~~ {.c}
     typedef void (*call_module_t)(void);
@@ -155,8 +155,8 @@ the program, and then halt Bochs, we should see `0xDEADBEEF` in the register
 
 The program we've written now runs at the same privilege level as the kernel -
 we've just entered it in a somewhat peculiar way. To enable applications to
-execute at a different privilege level we'll need to do
-[_segmentation_](#segmentation), [_paging_](#paging) and [_page frame
+execute at a different privilege level we'll need to, beside
+[_segmentation_](#segmentation), do [_paging_](#paging) and [_page frame
 allocation_](#page-frame-allocation).
 
 It's quite a lot of work and technical details to go through, but in a few

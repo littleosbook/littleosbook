@@ -68,7 +68,7 @@ physical address, called _identity paging_. This can be done at compile time
 by creating a page directory where each entry points to its
 corresponding 4 MB frame. In NASM this can be done with macros and commands
 (`%rep`, `times` and `dd`). It can of course also be done at run-time by using
-ordinary assembly instructions.
+ordinary assembly code instructions.
 
 ### Enabling Paging
 
@@ -119,7 +119,7 @@ An example of invalidating a TLB entry is shown below:
 This section will describe how paging affects the OS kernel. We
 encourage you to run your OS using identity paging before trying to implement a
 more advanced paging setup, since it can be hard to debug a malfunctioning
-page table that is set up via assembly.
+page table that is set up via assembly code.
 
 ### Reasons to Not Identity Map the Kernel
 

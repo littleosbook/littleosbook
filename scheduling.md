@@ -43,7 +43,7 @@ running. The system call `yield` should then run the next process in the list
 and put the current one last (other schemes are possible, but this is a simple
 one).
 
-The transfer of control to the new process is done via the `iret` assembly
+The transfer of control to the new process is done via the `iret` assembly code
 instruction in exactly the same way as explained in the section ["Entering user
 mode"](#entering-user-mode) in the chapter ["User Mode"](#user-mode).
 

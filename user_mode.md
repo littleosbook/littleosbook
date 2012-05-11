@@ -78,11 +78,11 @@ register `cr3`.
 
 The register `eflags` contains a set of different flags, specified in
 section 2.3 of the Intel manual [@intel3a]. Most important for us is the
-interrupt enable (IF) flag. The assembly instruction `sti` can't be used in
+interrupt enable (IF) flag. The assembly code instruction `sti` can't be used in
 privilege level 3 for enabling interrupts. If interrupts are disabled when
 entering user mode, then interrupts can't enabled once user mode is entered.
 Setting the IF flag in the `eflags` entry on the stack will enable interrupts
-in user mode, since the assembly instruction `iret` will set the register
+in user mode, since the assembly code instruction `iret` will set the register
 `eflags` to the corresponding value on the stack.
 
 For now, we should have interrupts disabled, as it requires a little more
@@ -109,7 +109,7 @@ example:
 
 The register `ds`, and the other data segment registers, should be set to the
 same segment selector as `ss`. They can be set the ordinary way, with the `mov`
-assembly instruction.
+assembly code instruction.
 
 We are now ready to execute `iret`. If everything has been set up right, we
 should now have a kernel that can enter user mode.
@@ -129,7 +129,7 @@ One thing we can do to make it easier to develop user mode programs is to allow
 the programs to be written in C, but compile them to flat binaries instead of
 ELF binaries. In C the layout of the generated code is more unpredictable and
 the entry point, `main`, might not be at offset 0 in the binary. One common way
-to work around this is to add a few assembly lines placed at offset 0 which
+to work around this is to add a few assembly code lines placed at offset 0 which
 calls `main`:
 
 ~~~ {.nasm}

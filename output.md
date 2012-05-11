@@ -7,7 +7,7 @@ hardware.  The first part of this chapter is about creating a driver for the
 _framebuffer_ [@wiki:fb] to be able to display text on the console. The second
 part shows how to create a driver for the serial port. Bochs can store output
 from the serial port in a file, effectively creating a logging mechanism for
-the operating system!
+the operating system.
 
 ## Interacting with the Hardware
 There are usually two different ways to interact with the hardware,
@@ -16,11 +16,11 @@ _memory-mapped I/O_ and _I/O ports_.
 If the hardware uses memory-mapped I/O then you can write to a specific memory
 address and the hardware will be updated with the new data. One example of this
 is the framebuffer, which will be discussed in more detail later. For example,
-if you write the value `0x410F` to address `0x000B8000` [@wiki:vga-compat], you
+if you write the value `0x410F` to address `0x000B8000`, you
 will see the letter A in white color on a black background (see the section
 on [the framebuffer](#the-framebuffer) for more details).
 
-If the hardware uses I/O ports then the assembly instructions `out` and `in`
+If the hardware uses I/O ports then the assembly code instructions `out` and `in`
 must be used to communicate with the hardware. The instruction `out` takes two
 parameters: the address of the I/O port and the data to send. The instruction
 `in` takes a single parameter, the address of the I/O port, and returns data
@@ -32,13 +32,13 @@ via I/O ports on a PC.
 ## The Framebuffer
 The framebuffer is a hardware device that is capable of displaying a buffer of
 memory on the screen [@wiki:fb]. The framebuffer has 80 columns and 25 rows,
-and their indices start at 0 (so rows are labelled 0 - 24).
+and the row and column indices start at 0 (so rows are labelled 0 - 24).
 
 ### Writing Text
 Writing text to the console via the framebuffer is done with memory-mapped I/O.
 The starting address of the memory-mapped I/O for the framebuffer is
 `0x000B8000` [@wiki:vga-compat]. The memory is divided into 16 bit cells, where
-the 16 bits determines both the character, the foreground color and the
+the 16 bits determine both the character, the foreground color and the
 background color. The highest eight bits is the ASCII [@wiki:ascii] value of
 the character, bit 7 - 4 the background and bit 3 - 0 the foreground, as can be
 seen in the following figure:
@@ -46,7 +46,7 @@ seen in the following figure:
     Bit:     | 15 14 13 12 11 10 9 8 | 7 6 5 4 | 3 2 1 0 |
     Content: | ASCII                 | FG      | BG      |
 
-The available colors are show in the following table:
+The available colors are shown in the following table:
 
  Color Value       Color Value         Color Value          Color Value
 ------ ------ ---------- ------- ----------- ------ ------------- ------
@@ -58,7 +58,7 @@ The available colors are show in the following table:
 The first cell corresponds to row zero, column zero on the console.  Using an
 ASCII table, one can see that A corresponds to 65 or `0x41`. Therefore, to
 write the character A with a green foreground (2) and dark grey background (8)
-at place (0,0), the following assembly instruction is used:
+at place (0,0), the following assembly code instruction is used:
 
 ~~~ {.nasm}
     mov [0x000B8000], 0x4128
@@ -113,7 +113,7 @@ The function can then be used as follows:
 Moving the cursor of the framebuffer is done via two different I/O ports. The
 cursor's position is determined with a 16 bits integer: 0 means row zero,
 column zero; 1 means row zero, column one; 80 means row one, column zero and so
-on.  Since the position is 16 bits large, and the `out` assembly instruction
+on.  Since the position is 16 bits large, and the `out` assembly code instruction
 argument is 8 bits, the position must be sent in two turns, first 8 bits then
 the next 8 bits. The framebuffer has two I/O ports, one for accepting the data,
 and one for describing the data being received. Port `0x3D4` [@osdev:vga] is
@@ -121,7 +121,7 @@ the port that describes the data and port `0x3D5` [@osdev:vga] is for the data
 itself.
 
 To set the cursor at row one, column zero (position `80 = 0x0050`), one would
-use the following assembly instructions:
+use the following assembly code instructions:
 
 ~~~ {.nasm}
     out 0x3D4, 14      ; 14 tells the framebuffer to expect the highest 8 bits of the position
@@ -130,8 +130,8 @@ use the following assembly instructions:
     out 0x3D5, 0x50    ; sending the lowest 8 bits of 0x0050
 ~~~
 
-The `out` assembly instruction can't be done in C. Therefore it is a good idea
-to wrap `out` in an assembly function which can be accessed from C via the cdecl
+The `out` assembly code instruction can't be executed directly in C. Therefore it is a good idea
+to wrap `out` in a function in assembly code which can be accessed from C via the cdecl
 calling standard [@wiki:ccall]:
 
 ~~~ {.nasm}
@@ -149,7 +149,7 @@ calling standard [@wiki:ccall]:
 ~~~
 
 By storing this function in a file called `io.s` and also creating a header
-`io.h`, the `out` assembly instruction can be conveniently accessed from C:
+`io.h`, the `out` assembly code instruction can be conveniently accessed from C:
 
 ~~~ {.c}
     #ifndef INCLUDE_IO_H
@@ -294,7 +294,8 @@ like the following:
     Bit:     | 7 | 6 | 5 4 3 | 2 | 1 0 |
     Content: | d | b | prty  | s | dl  |
 
-A description for each name can be found in the table below:
+A description for each name can be found in the table below (and in
+[@osdev:serial]):
 
  Name Description
 ----- ------------
@@ -345,8 +346,8 @@ A description for each name can be found in the table below:
  Name Description
 ----- ------------
   lvl How many bytes should be stored in the FIFO buffers
-   bs If the buffers should 16 or 64 bytes large
-    r Reserved
+   bs If the buffers should be 16 or 64 bytes large
+    r Reserved for future use
   dma How the serial port data should be accessed
   clt Clear the transmission FIFO buffer
   clr Clear the receiver FIFO buffer
@@ -395,9 +396,9 @@ writing, the transmit FIFO queue has to be empty (all previous writes must have
 finished). The transmit FIFO queue is empty if bit 5 of the line status I/O
 port is equal to one.
 
-Reading the contents of an I/O port is done via the `in` assembly instruction.
-There is no way to use the `in` assembly instruction from C, therefore it has
-to be wrapped (the same way as the `out` assembly instruction):
+Reading the contents of an I/O port is done via the `in` assembly code instruction.
+There is no way to use the `in` assembly code instruction from C, therefore it has
+to be wrapped (the same way as the `out` assembly code instruction):
 
 ~~~ {.nasm}
     global inb

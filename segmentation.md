@@ -19,9 +19,12 @@ how to enable paging.)
 To enable segmentation you need to set up a table that describes each segment -
 a _segment descriptor table_. In x86, there are two types of descriptor tables:
 the _Global Descriptor Table_ (GDT) and _Local Descriptor Tables_ (LDT). An LDT
-is set up and managed by user-space processes, and each process have their own
+is set up and managed by user-space processes, and all processes have their own
 LDT.  LDTs can be used if a more complex segmentation model is desired - we
 won't use it. The GDT is shared by everyone - it's global.
+
+As we discuss in the sections on virtual memory and paging, segmentation is
+rarely used more than in a minimal setup, similar to what we do below.
 
 ## Accessing Memory
 Most of the time when accessing memory there is no need to explicitly specify
@@ -104,7 +107,7 @@ fields.
 
 ## Loading the GDT
 
-Loading the GDT into the processor is done with the `lgdt` assembly
+Loading the GDT into the processor is done with the `lgdt` assembly code
 instruction, which takes the address of a struct that specifies the start and
 size of the GDT.  It is easiest to encode this information using a ["packed
 struct"](#packing-structs) as shown in the following example:
@@ -124,7 +127,7 @@ GDT can be loaded with the assembly code shown below:
 ~~~
 
 It might be easier if you make this instruction available from C, the same way
-as was done with the assembly instructions `in` and `out`.
+as was done with the assembly code instructions `in` and `out`.
 
 After the GDT has been loaded the segment registers needs to be loaded with
 their corresponding segment selectors. The content of a segment selector is

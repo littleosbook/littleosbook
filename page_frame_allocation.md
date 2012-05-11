@@ -75,7 +75,7 @@ make them available to C code:
 ~~~
 
 This way we get the labels as arguments to `kmain`. If you want to use C
-instead of assembly, one way to do it is to declare the labels as functions and
+instead of assembly code, one way to do it is to declare the labels as functions and
 take the addresses of these functions:
 
 ~~~ {.c}

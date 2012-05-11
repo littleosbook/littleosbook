@@ -5,9 +5,9 @@ _interrupts_ in order to read information from the keyboard). An interrupt
 occurs when a hardware device, such as the keyboard, the serial port or the
 timer, signals the CPU that the state of the device has changed. The CPU itself
 can also send interrupts due to program errors, for example when a program
-references memory it doesn't has access to, or when a program divides a number
+references memory it doesn't have access to, or when a program divides a number
 by zero. Finally, there are also _software intterupts_, which are interrupts
-that are caused by the `int` assembly instruction, and they are often used for
+that are caused by the `int` assembly code instruction, and they are often used for
 system calls.
 
 ## Interrupts Handlers
@@ -20,10 +20,10 @@ table. There are three different kinds of handlers for interrupts:
 - Interrupt handler
 - Trap handler
 
-The task handler uses Intel specific functionality, so they won't be covered
+The task handlers use functionality specific to the Intel version of x86, so they won't be covered
 here (see the Intel manual [@intel3a], chapter 6, for more info). The only
 difference between an interrupt handler and a trap handler is that the
-interrupt handler disables interrupts, which mean you can't get an interrupt
+interrupt handler disables interrupts, which means you cannot get an interrupt
 while at the same time handling an interrupt. In this book, we will use trap
 handlers and disable interrupts manually when we need to.
 
@@ -51,8 +51,8 @@ A description for each name can be found in the table below:
  segment selector The offset in the GDT.
                 r Reserved.
 
-The offset is a pointer to code (preferably an assembly label). For example, to
-create an entry for a handler which code starts at `0xDEADBEEF` and that
+The offset is a pointer to code (preferably an assembly code label). For example, to
+create an entry for a handler whose code starts at `0xDEADBEEF` and that
 runs in privilege level 0 (therefore using the same code
 segment selector as the kernel) the following two bytes would be used:
 
@@ -75,7 +75,7 @@ instead of using bytes (or unsigned integers) use packed structures to make the
 code more readable.
 
 ## Handling an Interrupt
-When an interrupt occurs the CPU will push information about the interrupt onto
+When an interrupt occurs the CPU will push some information about the interrupt onto
 the stack, then look up the appropriate interrupt hander in the IDT and jump to
 it. The stack at the time of the interrupt will look like the following:
 
@@ -87,8 +87,12 @@ it. The stack at the time of the interrupt will look like the following:
 ~~~
 
 The reason for the question mark behind error code is that not all interrupts
-create an error code. The specific CPU interrupts that put an error code on the
-stack are 8, 10, 11, 12, 13, 14 and 17.
+create an _error code_. The specific CPU interrupts that put an error code on the
+stack are 8, 10, 11, 12, 13, 14 and 17. The error code can be used by the
+interrupt handler to get more information on what has happened.
+Also, note that the interrupt _number_ is _not_ pushed onto the stack. We can only
+determine what interrupt has occurred by knowing what code is executing - if the handler
+registered for interrupt 17 is executing, then interrupt 17 has occurred.
 
 Once the interrupt handler is done, it uses the `iret` instruction to
 return. The instruction `iret` expects the stack to be the same as at the time
@@ -97,12 +101,12 @@ stack by the interrupt handler must be popped.  Before returning, `iret`
 restores `eflags` by popping the value from the stack and then finally jumps to
 `cs:eip` as specified by the values on the stack.
 
-The interrupt handler has to be written in assembly, since all registers that
-the interrupt handlers uses must be preserved by pushing them onto the stack.
+The interrupt handler has to be written in assembly code, since all registers that
+the interrupt handlers use must be preserved by pushing them onto the stack.
 This is because the code that was interrupted doesn't know about the interrupt
 and will therefore expect that its registers stay the same. Writing all the
-logic of the interrupt handler in assembly will be tiresome. Creating an
-assembly handler that saves the registers, calls a C function, restores the
+logic of the interrupt handler in assembly code will be tiresome. Creating a
+handler in assembly code that saves the registers, calls a C function, restores the
 registers and finally executes `iret` is a good idea!
 
 The C handler should get the state of the registers, the state of the stack and
@@ -131,13 +135,13 @@ example be used:
 ~~~
 
 ## Creating a Generic Interrupt Handler
-The CPU does _not_ push the interrupt number on the stack, therefore it is a
+Since the CPU does not push the interrupt number on the stack it is a
 little tricky to write a generic interrupt handler. This section will use
 macros to show how it can be done. Writing one version for each
 interrupt is tedious - it is better to use the macro functionality of NASM
-[@nasm:macros]. Not all interrupts produce an error code, therefore the value 0
-will be added as "error code" for interrupts without error code. The following
-code show an example of how this can be done:
+[@nasm:macros]. And since not all interrupts produce an error code the value 0
+will be added as the "error code" for interrupts without an error code. The following
+code shows an example of how this can be done:
 
 ~~~ {.nasm}
     %macro no_error_code_interrupt_handler %1
@@ -201,10 +205,10 @@ The `common_interrupt_handler` does the following:
 - Execute `iret` to return to the interrupted code.
 
 Since the macros declare global labels the addresses of the interrupt handlers
-can be accessed from C or assembly when creating the IDT.
+can be accessed from C or assembly code when creating the IDT.
 
 ## Loading the IDT
-The IDT is loaded with the `lidt` assembly instruction which takes the address
+The IDT is loaded with the `lidt` assembly code instruction which takes the address
 of the first element in the table. It is easiest to wrap this instruction and
 use it from C:
 
