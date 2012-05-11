@@ -1,3 +1,3 @@
 % The little book about OS development
 % Erik Helin, Adam Renberg
-% 2012-05-11 | Commit: 7eda7b76fe841e724fd28138ca11ed73e42b504d
+% 2012-05-11 | Commit: 29e097ea98f6dddba5640bcb583198f3abf94ad4
