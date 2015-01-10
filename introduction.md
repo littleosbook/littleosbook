@@ -1,7 +1,7 @@
 # Introduction
 
 This text is a practical guide to writing your own x86 operating system. It is
-designed give enough help with the technical details while at the same time not
+designed to give enough help with the technical details while at the same time not
 reveal too much with samples and code excerpts. We've tried to collect
 parts of the vast (and often excellent) expanse of material and tutorials
 available, on the web and otherwise, and add our own insights into the problems
