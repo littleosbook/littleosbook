@@ -1,3 +1,6 @@
 book.html
 book.pdf
 header.log
+
+# vim
+*.swp

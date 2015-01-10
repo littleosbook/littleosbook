@@ -63,7 +63,7 @@ find any bugs that were introduced, since only a small part of the code had
 changed since the last known good state of the code. We encourage the reader to
 work in a similar way.
 
-During the six weeks of development, almost every single line of code were
+During the six weeks of development, almost every single line of code was
 written by the authors together (this way of working is also called
 _pair-programming_). It is our belief that we managed to avoid a lot of bugs
 due to this style of development, but this is hard to prove scientifically.
