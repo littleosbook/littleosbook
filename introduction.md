@@ -1,7 +1,7 @@
 # Introduction
 
 This text is a practical guide to writing your own x86 operating system. It is
-designed give enough help with the technical details while at the same time not
+designed to give enough help with the technical details while at the same time not
 reveal too much with samples and code excerpts. We've tried to collect
 parts of the vast (and often excellent) expanse of material and tutorials
 available, on the web and otherwise, and add our own insights into the problems
@@ -63,7 +63,7 @@ find any bugs that were introduced, since only a small part of the code had
 changed since the last known good state of the code. We encourage the reader to
 work in a similar way.
 
-During the six weeks of development, almost every single line of code were
+During the six weeks of development, almost every single line of code was
 written by the authors together (this way of working is also called
 _pair-programming_). It is our belief that we managed to avoid a lot of bugs
 due to this style of development, but this is hard to prove scientifically.
