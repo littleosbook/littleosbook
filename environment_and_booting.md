@@ -19,7 +19,7 @@ Once Ubuntu is installed, either physical or virtual, the following packages
 should be installed using `apt-get`:
 
 ~~~ {.bash}
-    sudo apt-get install build-essential nasm genisoimage bochs bochs-x
+    sudo apt-get install build-essential nasm genisoimage bochs bochs-sdl
 ~~~
 
 ### Programming Languages
@@ -280,7 +280,7 @@ configuration file is given below:
 
 ~~~
     megs:            32
-    display_library: x
+    display_library: sdl
     romimage:        file=/usr/share/bochs/BIOS-bochs-latest
     vgaromimage:     file=/usr/share/bochs/VGABIOS-lgpl-latest
     ata0-master:     type=cdrom, path=minios.iso, status=inserted
