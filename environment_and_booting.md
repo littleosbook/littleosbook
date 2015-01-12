@@ -283,7 +283,7 @@ configuration file is given below:
     display_library: x
     romimage:        file=/usr/share/bochs/BIOS-bochs-latest
     vgaromimage:     file=/usr/share/bochs/VGABIOS-lgpl-latest
-    ata0-master:     type=cdrom, path=minios.iso, status=inserted
+    ata0-master:     type=cdrom, path=os.iso, status=inserted
     boot:            cdrom
     log:             bochslog.txt
     clock:           sync=realtime, time0=local
