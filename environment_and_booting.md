@@ -133,7 +133,8 @@ describes how to set one up). Save the following code in a file called
 
     MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
     FLAGS        equ 0x0            ; multiboot flags
-    CHECKSUM     equ -MAGIC_NUMBER  ; calculate the checksum (magic number + checksum + flags should equal 0)
+    CHECKSUM     equ -MAGIC_NUMBER  ; calculate the checksum
+                                    ; (magic number + checksum + flags should equal 0)
 
     section .text:                  ; start of the text (code) section
     align 4                         ; the code must be 4 byte aligned
