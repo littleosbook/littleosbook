@@ -479,3 +479,4 @@ the messages with `DEBUG`, `INFO` or `ERROR`.
   <http://en.wikibooks.org/wiki/Serial_Programming/8250_UART_Programming#UART_Registers>
 - The OSDev wiki has a page with a lot of information about the serial ports,
   <http://wiki.osdev.org/Serial_ports>
+- http://en.wikipedia.org/wiki/VGA-compatible_text_mode
