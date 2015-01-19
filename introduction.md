@@ -87,6 +87,17 @@ insightful questions and interesting discussions.
 Most of the CSS formatting of the book is based on the work by Scott Chacon for
 the book Pro Git, <http://progit.org/>.
 
+## Contributors
+We are very grateful for the patches that people send us. The following users
+have all contributed to this book:
+
+- [alexschneider](https://github.com/alexschneider)
+- [Avidanborisov](https://github.com/Avidanborisov)
+- [nirs](https://github.com/nirs)
+- [kedarmhaswade](https://github.com/kedarmhaswade)
+- [vamanea](https://github.com/vamanea)
+- [ansjob](https://github.com/ansjob)
+
 ## Changes and Corrections
 
 This book is hosted on Github - if you have any suggestions, comments or
