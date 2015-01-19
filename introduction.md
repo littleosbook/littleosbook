@@ -104,6 +104,10 @@ This book is hosted on Github - if you have any suggestions, comments or
 corrections, just fork the book, write your changes, and send us a pull
 request. We'll happily incorporate anything that makes this book better.
 
+## Issues and where to get help
+If you run into problems while reading the book, please check the issues on
+Github for help: <https://github.com/littleosbook/littleosbook/issues>.
+
 ## License
 
 All content is under the Creative Commons Attribution Non Commercial Share
