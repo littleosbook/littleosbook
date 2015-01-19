@@ -38,7 +38,7 @@
       <else>
         <names variable="author">
             <name />
-        </name>
+        </names>
       </else>
     </choose>
   </macro>
