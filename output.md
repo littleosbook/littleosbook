@@ -94,8 +94,8 @@ The following code shows how this can be wrapped into a function:
      */
     void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg)
     {
-        fb[i] = c;
-        fb[i + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F)
+        fb[i * 2] = c;
+        fb[i * 2 + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F)
     }
 ~~~
 
