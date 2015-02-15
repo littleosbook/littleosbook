@@ -30,7 +30,7 @@ There are a few things every user mode process needs:
 
 - Page frames for code, data and stack. At the moment it suffices to allocate
   one page frame for the stack and enough page frames to fit the program's
-  code. Don't worry about setting up a stack that can be grow and shrink at
+  code. Don't worry about setting up a stack that can grow and shrink at
   this point in time, focus on getting a basic implementation work first.
 
 - The binary from the GRUB module has to be copied to the page frames used for
