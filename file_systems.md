@@ -44,7 +44,7 @@ files or modify existing ones.
 
 When the need for a writable file system arises, then it is a good idea to look
 into the concept of an _inode_. See the section ["Further
-Reading"](#further-reading-6) for recommended reading.
+Reading"](#further-reading-9) for recommended reading.
 
 ## A Virtual File System
 
@@ -55,7 +55,7 @@ A virtual file system (VFS) creates an abstraction on top of the concrete
 file systems. A VFS mainly supplies the path system and file
 hierarchy, it delegates operations on files to the underlying file
 systems. The original paper on VFS is succinct and well worth a
-read. See the section ["Further Reading"](#further-reading-6) for a reference.
+read. See the section ["Further Reading"](#further-reading-9) for a reference.
 
 With a VFS we could mount a special file system on the path `/dev`. This file
 system would handle all devices such as keyboards and the console. However, one
