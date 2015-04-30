@@ -69,7 +69,7 @@ rightmost argument first. The return value of the function is placed in the
 
 ~~~ {.nasm}
     ; The assembly code
-    external sum_of_three   ; the function sum_of_three is defined elsewhere
+    extern sum_of_three   ; the function sum_of_three is defined elsewhere
 
     push dword 3            ; arg3
     push dword 2            ; arg2
