@@ -95,7 +95,7 @@ stack starts - `0xBFFFFFFB` (`0xC0000000 - 4`).
 
 The values `cs` and `ss` on the stack should be the segment selectors for the
 user code and user data segments, respectively. As we saw in the [segmentation
-chapter](#creating-and-loading-the-gdt), the lowest two bits of a segment
+chapter](#loading-the-gdt), the lowest two bits of a segment
 selector is the RPL - the Requested Privilege Level. When using `iret` to enter
 PL3, the RPL of `cs` and `ss` should be `0x3`. The following code shows an
 example:
