@@ -1,7 +1,7 @@
 # User Mode
 
 User mode is now almost within our reach, there are just a few more steps
-required to get there. Although these steps might seem easy they way they
+required to get there. Although these steps might seem easy the way they
 are presented in this chapter, they can be tricky to implement, since there are
 a lot of places where small errors will cause bugs that are hard to find.
 
