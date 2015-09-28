@@ -39,12 +39,12 @@ Writing text to the console via the framebuffer is done with memory-mapped I/O.
 The starting address of the memory-mapped I/O for the framebuffer is
 `0x000B8000` [@wiki:vga-compat]. The memory is divided into 16 bit cells, where
 the 16 bits determine both the character, the foreground color and the
-background color. The highest eight bits is the ASCII [@wiki:ascii] value of
-the character, bit 7 - 4 the background and bit 3 - 0 the foreground, as can be
+background color. The lowest eight bits is the ASCII [@wiki:ascii] value of
+the character, bit 11 - 8 the foreground and bit 15 - 12 the background, as can be
 seen in the following figure:
 
-    Bit:     | 15 14 13 12 11 10 9 8 | 7 6 5 4 | 3 2 1 0 |
-    Content: | ASCII                 | FG      | BG      |
+    Bit:     | 15 14 13 12 | 11 10 9 8 | 7 6 5 4 3 2 1 0 |
+    Content: | BG          | FG        | ASCII           |
 
 The available colors are shown in the following table:
 
@@ -61,7 +61,7 @@ write the character A with a green foreground (2) and dark grey background (8)
 at place (0,0), the following assembly code instruction is used:
 
 ~~~ {.nasm}
-    mov [0x000B8000], 0x4128
+    mov [0x000B8000], 0x8241
 ~~~
 
 The second cell then corresponds to row zero, column one and its address is
@@ -77,7 +77,7 @@ A at place (0,0) with green foreground and dark grey background becomes:
 
 ~~~ {.nasm}
     fb[0] = 'A';
-    fb[1] = 0x28;
+    fb[1] = 0x82;
 ~~~
 
 The following code shows how this can be wrapped into a function:
@@ -95,7 +95,7 @@ The following code shows how this can be wrapped into a function:
     void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg)
     {
         fb[i] = c;
-        fb[i + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F)
+        fb[i + 1] = ((bg & 0x0F) << 4) | (fg & 0x0F)
     }
 ~~~
 
