@@ -68,7 +68,7 @@ The second cell then corresponds to row zero, column one and its address is
 therefore:
 
 ~~~
-    0x000B8000 + 16 = 0x000B8010
+    0x000B8000 + 2 = 0x000B8002
 ~~~
 
 Writing to the framebuffer can also be done in C by treating the address
