@@ -89,13 +89,13 @@ The following code shows how this can be wrapped into a function:
      *
      *  @param i  The location in the framebuffer
      *  @param c  The character
-     *  @param fg The foreground color
      *  @param bg The background color
+     *  @param fg The foreground color 
      */
-    void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg)
+    void fb_write_cell(unsigned int i, char c, unsigned char bg, unsigned char fg)
     {
         fb[i] = c;
-        fb[i + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F)
+        fb[i + 1] = ((bg & 0x0F) << 4) | (fg & 0x0F)
     }
 ~~~
 
