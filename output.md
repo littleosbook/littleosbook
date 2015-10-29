@@ -44,7 +44,7 @@ the character, bit 7 - 4 the background and bit 3 - 0 the foreground, as can be
 seen in the following figure:
 
     Bit:     | 15 14 13 12 11 10 9 8 | 7 6 5 4 | 3 2 1 0 |
-    Content: | ASCII                 | FG      | BG      |
+    Content: | ASCII                 | BG      | FG      |
 
 The available colors are shown in the following table:
 
@@ -68,7 +68,7 @@ The second cell then corresponds to row zero, column one and its address is
 therefore:
 
 ~~~
-    0x000B8000 + 16 = 0x000B8010
+    0x000B8000 + 2 = 0x000B8002
 ~~~
 
 Writing to the framebuffer can also be done in C by treating the address
@@ -89,13 +89,13 @@ The following code shows how this can be wrapped into a function:
      *
      *  @param i  The location in the framebuffer
      *  @param c  The character
-     *  @param fg The foreground color
      *  @param bg The background color
+     *  @param fg The foreground color 
      */
-    void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg)
+    void fb_write_cell(unsigned int i, char c, unsigned char bg, unsigned char fg)
     {
         fb[i] = c;
-        fb[i + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F)
+        fb[i + 1] = ((bg & 0x0F) << 4) | (fg & 0x0F)
     }
 ~~~
 
