@@ -33,7 +33,7 @@ the segment to use. The processor has six 16-bit segment registers: `cs`, `ss`,
 specifies the segment to use when fetching instructions. The register `ss` is
 used whenever accessing the stack (through the stack pointer `esp`), and `ds`
 is used for other data accesses. The OS is free to use the registers `es`, `gs`
-and `fs` however it want.
+and `fs` however it wants.
 
 Below is an example showing implicit use of the segment registers:
 
