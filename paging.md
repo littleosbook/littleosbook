@@ -26,7 +26,7 @@ privilege levels), paging is the neatest way to do it.
 Paging in x86 (chapter 4 in the Intel manual [@intel3a]) consists of a _page
 directory_ (PDT) that can contain references to 1024 _page tables_ (PT), each of
 which can point to 1024 sections of physical memory called _page frames_ (PF).
-Each page frame is 4096 byte large. In a virtual (linear) address, the
+Each page frame is 4096 bytes large. In a virtual (linear) address, the
 highest 10 bits specifies the offset of a page directory entry (PDE) in the
 current PDT, the next 10 bits the offset of a page table entry (PTE)
 within the page table pointed to by that PDE. The lowest 12 bits in the address
