@@ -131,7 +131,7 @@ example be used:
         unsigned int eflags;
     } __attribute__((packed));
 
-    void interrupt_handler(struct cpu_state cpu, struct stack_state stack, unsigned int interrupt);
+    void interrupt_handler(struct cpu_state cpu, unsigned int interrupt, struct stack_state stack);
 ~~~
 
 ## Creating a Generic Interrupt Handler
