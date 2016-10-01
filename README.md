@@ -12,6 +12,12 @@ To convert the Markdown to either HTML or PDF, you need to have
 ["Pandoc"](http://johnmacfarlane.net/pandoc/) version 1.9.1.1 or higher. For
 installing Pandoc, see <http://johnmacfarlane.net/pandoc/installing.html>.
 
+For example, on Ubuntu you can run:
+
+```
+sudo apt-get install pandoc pandoc-citedoc
+```
+
 If you want to create the PDF version, you also need `pdflatex` installed.
 
 ## Errors
