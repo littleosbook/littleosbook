@@ -125,15 +125,14 @@ information about the flags, see the GCC manual.
 The flags used for compiling the C code are:
 
 ~~~
-    -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles
-    -nodefaultlibs
+    -m32 -ffreestanding -fbuiltin -fno-stack-protector
 ~~~
 
 As always when writing C programs we recommend turning on all warnings and
 treat warnings as errors:
 
 ~~~
-    -Wall -Wextra -Werror
+    -Wall -Wextra -Wpedantic -Werror
 ~~~
 
 You can now create a function `kmain` in a file called `kmain.c` that you call
@@ -149,9 +148,9 @@ look like the following example:
 ~~~ {.Makefile}
     OBJECTS = loader.o kmain.o
     CC = gcc
-    CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
-             -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c
-    LDFLAGS = -T link.ld -melf_i386
+    CFLAGS = -m32 -ffreestanding -fbuiltin -fno-stack-protector \
+             -Wall -Wpedantic -Wextra -Werror -O2 -c
+    LDFLAGS = -T link.ld -melf_i386 -nostdlib
     AS = nasm
     ASFLAGS = -f elf
 
