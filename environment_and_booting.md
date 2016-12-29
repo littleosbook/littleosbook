@@ -309,6 +309,14 @@ Bochs with the following command:
 The flag `-f` tells Bochs to use the given configuration file and the flag `-q`
 tells Bochs to skip the interactive start menu. You should now see Bochs
 starting and displaying a console with some information from GRUB on it.
+If your version of Bochs comes with the debugger precompiled, and you see the 
+following prompt:
+
+~~~
+    <bochs:1>
+~~~
+
+Press `c` followed by `enter` to get it running.
 
 After quitting Bochs, display the log produced by Boch:
 
