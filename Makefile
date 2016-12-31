@@ -15,12 +15,12 @@ all: book.html
 book.html: $(CHAPTERS) $(CSS) $(HTML_TEMPLATE) $(BIB) $(CITATION)
 	pandoc -s -S --toc -c $(CSS) --template $(HTML_TEMPLATE) \
 		   --bibliography $(BIB) --csl $(CITATION) --number-sections \
-		   $(CHAPTERS) -o $@
+		   --metadata link-citations=true $(CHAPTERS) -o $@
 
 book.pdf: $(CHAPTERS) $(TEX_HEADER) $(BIB) $(CITATION)
 	pandoc --toc -H $(TEX_HEADER) --latex-engine=pdflatex --chapters \
 		   --no-highlight --bibliography $(BIB) --csl $(CITATION) \
-		   $(CHAPTERS) -o $@
+		   --metadata link-citations=true $(CHAPTERS) -o $@
 
 ff: book.html
 	firefox book.html
