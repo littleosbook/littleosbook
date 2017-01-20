@@ -22,6 +22,11 @@ book.pdf: $(CHAPTERS) $(TEX_HEADER) $(BIB) $(CITATION)
 		   --no-highlight --bibliography $(BIB) --csl $(CITATION) \
 		   $(CHAPTERS) -o $@
 
+book.epub: $(CHAPTERS) $(TEX_HEADER) $(BIB) $(CITATION)
+	pandoc --toc -H $(TEX_HEADER) --chapters \
+		   --no-highlight --bibliography $(BIB) --csl $(CITATION) \
+		   $(CHAPTERS) -o $@
+
 ff: book.html
 	firefox book.html
 
