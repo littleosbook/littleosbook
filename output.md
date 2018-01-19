@@ -40,7 +40,7 @@ The starting address of the memory-mapped I/O for the framebuffer is
 `0x000B8000` [@wiki:vga-compat]. The memory is divided into 16 bit cells, where
 the 16 bits determine both the character, the foreground color and the
 background color. The highest eight bits is the ASCII [@wiki:ascii] value of
-the character, bit 7 - 4 the background and bit 3 - 0 the foreground, as can be
+the character, bit 7 - 4 the foreground and bit 3 - 0 the background, as can be
 seen in the following figure:
 
     Bit:     | 15 14 13 12 11 10 9 8 | 7 6 5 4 | 3 2 1 0 |
