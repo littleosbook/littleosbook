@@ -193,6 +193,12 @@ Moving the cursor can now be wrapped in a C function:
     }
 ~~~
 
+Don't forget to add the compiled object file of `io.s` to your Makefile to tell the linker about your additions:
+
+~~~ {Makefile}
+OBJECTS = loader.o kmain.o io.o
+~~~
+
 ### The Driver
 The driver should provide an interface that the rest of the code in the OS will
 use for interacting with the framebuffer.  There is no right or wrong in what
