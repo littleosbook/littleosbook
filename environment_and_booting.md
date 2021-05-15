@@ -213,7 +213,7 @@ GRUB Legacy `stage2_eltorito` bootloader will be used. This file can be built
 from GRUB 0.97 by downloading the source from
 <ftp://alpha.gnu.org/gnu/grub/grub-0.97.tar.gz>.  However, the `configure`
 script doesn't work well with Ubuntu [@ubuntu-grub], so the binary file can be
-downloaded from <http://littleosbook.github.com/files/stage2_eltorito>. Copy
+downloaded from <http://littleosbook.github.io/files/stage2_eltorito>. Copy
 the file `stage2_eltorito` to the folder that already contains `loader.s` and
 `link.ld`.
 
