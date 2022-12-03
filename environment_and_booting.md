@@ -211,9 +211,9 @@ The GRUB version we will use is GRUB Legacy, since the OS ISO image can then be
 generated on systems using both GRUB Legacy and GRUB 2. More specifically, the
 GRUB Legacy `stage2_eltorito` bootloader will be used. This file can be built
 from GRUB 0.97 by downloading the source from
-<ftp://alpha.gnu.org/gnu/grub/grub-0.97.tar.gz>.  However, the `configure`
+<https://alpha.gnu.org/gnu/grub/grub-0.97.tar.gz>.  However, the `configure`
 script doesn't work well with Ubuntu [@ubuntu-grub], so the binary file can be
-downloaded from (here.)[https://github.com/littleosbook/littleosbook/raw/master/files/stage2_eltorito] Copy
+downloaded from <https://github.com/littleosbook/littleosbook/raw/master/files/stage2_eltorito> Copy
 the file `stage2_eltorito` to the folder that already contains `loader.s` and
 `link.ld`.
 
