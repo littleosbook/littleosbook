@@ -80,7 +80,7 @@ tutorials are often helpful if you get stuck.
 ## Credits, Thanks and Acknowledgements
 
 We'd like to thank the OSDev community [@osdev] for their great wiki and
-helpful members, and James Malloy for his eminent kernel development tutorial
+helpful members, and James Molloy for his eminent kernel development tutorial
 [@malloy]. We'd also like to thank our supervisor Torbjörn Granlund for his
 insightful questions and interesting discussions.
 
