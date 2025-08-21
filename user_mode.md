@@ -185,7 +185,7 @@ When we compile user programs we want the following GCC flags:
     -nodefaultlibs
 ~~~
 
-For linking, the followings flags should be used:
+For linking, the following flags should be used:
 
 ~~~
     -T link.ld -melf_i386  # emulate 32 bits ELF, the binary output is specified
