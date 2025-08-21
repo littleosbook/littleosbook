@@ -46,7 +46,7 @@ A description for each name can be found in the table below:
       offset high The 16 highest bits of the 32 bit address in the segment.
        offset low The 16 lowest bits of the 32 bits address in the segment.
                 p If the handler is present in memory or not (1 = present, 0 = not present).
-              DPL Descriptor Privilige Level, the privilege level the handler can be called from (0, 1, 2, 3).
+              DPL Descriptor Privilege Level, the privilege level the handler can be called from (0, 1, 2, 3).
                 D Size of gate, (1 = 32 bits, 0 = 16 bits).
  segment selector The offset in the GDT.
                 r Reserved.
@@ -76,7 +76,7 @@ code more readable.
 
 ## Handling an Interrupt
 When an interrupt occurs the CPU will push some information about the interrupt onto
-the stack, then look up the appropriate interrupt hander in the IDT and jump to
+the stack, then look up the appropriate interrupt handler in the IDT and jump to
 it. The stack at the time of the interrupt will look like the following:
 
 ~~~
