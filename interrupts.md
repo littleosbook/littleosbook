@@ -1,4 +1,5 @@
 # Interrupts and Input
+
 Now that the OS can produce _output_ it would be nice if
 it also could get some _input_. (The operating system must be able to handle
 _interrupts_ in order to read information from the keyboard). An interrupt
@@ -6,11 +7,12 @@ occurs when a hardware device, such as the keyboard, the serial port or the
 timer, signals the CPU that the state of the device has changed. The CPU itself
 can also send interrupts due to program errors, for example when a program
 references memory it doesn't have access to, or when a program divides a number
-by zero. Finally, there are also _software intterupts_, which are interrupts
+by zero. Finally, there are also _software interrupts_, which are interrupts
 that are caused by the `int` assembly code instruction, and they are often used for
 system calls.
 
 ## Interrupts Handlers
+
 Interrupts are handled via the _Interrupt Descriptor Table_ (IDT). The IDT
 describes a handler for each interrupt. The interrupts are numbered (0 - 255)
 and the handler for interrupt _i_ is defined at the _ith_ position in the
@@ -28,6 +30,7 @@ while at the same time handling an interrupt. In this book, we will use trap
 handlers and disable interrupts manually when we need to.
 
 ## Creating an Entry in the IDT
+
 An entry in the IDT for an interrupt handler consists of 64 bits.
 The highest 32 bits are shown in the figure below:
 
@@ -42,49 +45,53 @@ The lowest 32 bits are presented in the following figure:
 A description for each name can be found in the table below:
 
              Name Description
------------------ ------------
+
+---
+
       offset high The 16 highest bits of the 32 bit address in the segment.
        offset low The 16 lowest bits of the 32 bits address in the segment.
                 p If the handler is present in memory or not (1 = present, 0 = not present).
               DPL Descriptor Privilige Level, the privilege level the handler can be called from (0, 1, 2, 3).
                 D Size of gate, (1 = 32 bits, 0 = 16 bits).
- segment selector The offset in the GDT.
-                r Reserved.
+
+segment selector The offset in the GDT.
+r Reserved.
 
 The offset is a pointer to code (preferably an assembly code label). For example, to
 create an entry for a handler whose code starts at `0xDEADBEEF` and that
 runs in privilege level 0 (therefore using the same code
 segment selector as the kernel) the following two bytes would be used:
 
-~~~
+```
     0xDEAD8E00
     0x0008BEEF
-~~~
+```
 
-If the IDT is represented as an `unsigned integer idt[512]` then to register
+If the IDT is represented as an `unsigned int idt[512]` then to register
 the above example as an handler for interrupt 0 (divide-by-zero), the following
 code would be used:
 
-~~~ {.c}
+```{.c}
     idt[0] = 0xDEAD8E00
     idt[1] = 0x0008BEEF
-~~~
+```
 
 As written in the chapter ["Getting to C"](#getting-to-c), we recommend that you
 instead of using bytes (or unsigned integers) use packed structures to make the
 code more readable.
 
 ## Handling an Interrupt
+
 When an interrupt occurs the CPU will push some information about the interrupt onto
 the stack, then look up the appropriate interrupt hander in the IDT and jump to
 it. The stack at the time of the interrupt will look like the following:
 
-~~~
+```
     [esp + 12] eflags
     [esp + 8]  cs
     [esp + 4]  eip
     [esp]      error code?
-~~~
+```
 
 The reason for the question mark behind error code is that not all interrupts
 create an _error code_. The specific CPU interrupts that put an error code on the
@@ -97,7 +104,7 @@ registered for interrupt 17 is executing, then interrupt 17 has occurred.
 Once the interrupt handler is done, it uses the `iret` instruction to
 return. The instruction `iret` expects the stack to be the same as at the time
 of the interrupt (see the figure above). Therefore, any values pushed onto the
-stack by the interrupt handler must be popped.  Before returning, `iret`
+stack by the interrupt handler must be popped. Before returning, `iret`
 restores `eflags` by popping the value from the stack and then finally jumps to
 `cs:eip` as specified by the values on the stack.
 
@@ -113,7 +120,7 @@ The C handler should get the state of the registers, the state of the stack and
 the number of the interrupt as arguments. The following definitions can for
 example be used:
 
-~~~ {.c}
+```{.c}
     struct cpu_state {
         unsigned int eax;
         unsigned int ebx;
@@ -132,9 +139,10 @@ example be used:
     } __attribute__((packed));
 
     void interrupt_handler(struct cpu_state cpu, struct stack_state stack, unsigned int interrupt);
-~~~
+```
 
 ## Creating a Generic Interrupt Handler
+
 Since the CPU does not push the interrupt number on the stack it is a
 little tricky to write a generic interrupt handler. This section will use
 macros to show how it can be done. Writing one version for each
@@ -143,7 +151,7 @@ interrupt is tedious - it is better to use the macro functionality of NASM
 will be added as the "error code" for interrupts without an error code. The following
 code shows an example of how this can be done:
 
-~~~ {.nasm}
+```{.nasm}
     %macro no_error_code_interrupt_handler %1
     global interrupt_handler_%1
     interrupt_handler_%1:
@@ -190,11 +198,11 @@ code shows an example of how this can be done:
     .
     .
     .
-    error_code_handler              7       ; create handler for interrupt 7
+    error_code_interrupt_handler    7       ; create handler for interrupt 7
     .
     .
     .
-~~~
+```
 
 The `common_interrupt_handler` does the following:
 
@@ -208,11 +216,12 @@ Since the macros declare global labels the addresses of the interrupt handlers
 can be accessed from C or assembly code when creating the IDT.
 
 ## Loading the IDT
+
 The IDT is loaded with the `lidt` assembly code instruction which takes the address
 of the first element in the table. It is easiest to wrap this instruction and
 use it from C:
 
-~~~ {.nasm}
+```{.nasm}
     global  load_idt
 
     ; load_idt - Loads the interrupt descriptor table (IDT).
@@ -220,11 +229,12 @@ use it from C:
     ;        [esp    ] the return address
     load_idt:
         mov     eax, [esp+4]    ; load the address of the IDT into register eax
-        lidt    eax             ; load the IDT
+        lidt    [eax]           ; load the IDT
         ret                     ; return to the calling function
-~~~
+```
 
 ## Programmable Interrupt Controller (PIC)
+
 To start using hardware interrupts you must first configure the Programmable
 Interrupt Controller (PIC). The PIC makes it possible to map signals from the
 hardware to interrupts. The reasons for configuring the PIC are:
@@ -244,8 +254,10 @@ PIC 1).
 
 The hardware interrupts are shown in the table below:
 
- PIC 1 Hardware     PIC 2 Hardware
------- ---------   ------ ---------
+PIC 1 Hardware PIC 2 Hardware
+
+---
+
      0 Timer            8 Real Time Clock
      1 Keyboard         9 General I/O
      2 PIC 2           10 General I/O
@@ -266,7 +278,7 @@ Acknowledging a PIC interrupt is done by sending the byte `0x20` to the PIC
 that raised the interrupt. Implementing a `pic_acknowledge` function can thus
 be done as follows:
 
-~~~ {.c}
+```{.c}
     #include "io.h"
 
     #define PIC1_PORT_A 0x20
@@ -284,7 +296,7 @@ be done as follows:
      *
      *  @param num The number of the interrupt
      */
-    void pic_acknowledge(unsigned integer interrupt)
+    void pic_acknowledge(unsigned int interrupt)
     {
         if (interrupt < PIC1_START_INTERRUPT || interrupt > PIC2_END_INTERRUPT) {
           return;
@@ -296,7 +308,7 @@ be done as follows:
           outb(PIC2_PORT_A, PIC_ACK);
         }
     }
-~~~
+```
 
 ## Reading Input from the Keyboard
 
@@ -306,7 +318,7 @@ representing the just pressed button can be read from the keyboard's data I/O
 port which has address `0x60`. How this can be done is shown in the following
 example:
 
-~~~ {.c}
+```{.c}
     #include "io.h"
 
     #define KBD_DATA_PORT   0x60
@@ -320,7 +332,7 @@ example:
     {
         return inb(KBD_DATA_PORT);
     }
-~~~
+```
 
 The next step is to write a function that translates a scan code to the
 corresponding ASCII character. If you want to map the scan codes to ASCII

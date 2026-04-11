@@ -12,8 +12,10 @@ similar to the kernel segments we added when we [set up the
 GDT](#the-global-descriptor-table-gdt) in the [chapter about
 segmentation](#segmentation):
 
-  Index   Offset   Name                 Address range             Type   DPL
--------  -------   -------------------  ------------------------- -----  ----
+Index Offset Name Address range Type DPL
+
+---
+
       3   `0x18`   user code segment    `0x00000000 - 0xFFFFFFFF` RX     PL3
       4   `0x20`   user data segment    `0x00000000 - 0xFFFFFFFF` RW     PL3
 
@@ -55,13 +57,13 @@ return or long return, respectively.
 To enter user mode we set up the stack as if the processor had raised an
 inter-privilege level interrupt. The stack should look like the following:
 
-~~~
+```
     [esp + 16]  ss      ; the stack segment selector we want for user mode
     [esp + 12]  esp     ; the user mode stack pointer
     [esp +  8]  eflags  ; the control flags we want to use in user mode
     [esp +  4]  cs      ; the code segment selector
     [esp +  0]  eip     ; the instruction pointer of user mode code to execute
-~~~
+```
 
 See the Intel manual [@intel3a], section 6.2.1, figure 6-4 for more
 information.
@@ -90,8 +92,9 @@ work to get inter-privilege level interrupts to work properly (see the
 section ["System calls"](#system-calls)).
 
 The value `eip` on the stack should point to the entry point for the user code
+
 - `0x00000000` in our case. The value `esp` on the stack should be where the
-stack starts - `0xBFFFFFFB` (`0xC0000000 - 4`).
+  stack starts - `0xBFFFFFFB` (`0xC0000000 - 4`).
 
 The values `cs` and `ss` on the stack should be the segment selectors for the
 user code and user data segments, respectively. As we saw in the [segmentation
@@ -100,12 +103,12 @@ selector is the RPL - the Requested Privilege Level. When using `iret` to enter
 PL3, the RPL of `cs` and `ss` should be `0x3`. The following code shows an
 example:
 
-~~~ {.nasm}
+```{.nasm}
     USER_MODE_CODE_SEGMENT_SELECTOR equ 0x18
     USER_MODE_DATA_SEGMENT_SELECTOR equ 0x20
-    mov cs, USER_MODE_CODE_SEGMENT_SELECTOR | 0x3
-    mov ss, USER_MODE_DATA_SEGMENT_SELECTOR | 0x3
-~~~
+    ; cs and ss are loaded by iret from the prepared stack frame.
+    ; use these selectors when preparing user-mode stack values.
+```
 
 The register `ds`, and the other data segment registers, should be set to the
 same segment selector as `ss`. They can be set the ordinary way, with the `mov`
@@ -120,7 +123,7 @@ When C is used as the programming language for user mode programs, it is
 important to think about the structure of the file that will be the result of
 the compilation.
 
-The reason we can use ELF [@wiki:elf] as the file format for for the kernel
+The reason we can use ELF [@wiki:elf] as the file format for the kernel
 executable is because GRUB knows how to parse and interpret the ELF file format.
 If we implemented an ELF parser, we could compile the user mode programs into ELF
 binaries as well. We leave this as an exercise for the reader.
@@ -132,7 +135,7 @@ the entry point, `main`, might not be at offset 0 in the binary. One common way
 to work around this is to add a few assembly code lines placed at offset 0 which
 calls `main`:
 
-~~~ {.nasm}
+```{.nasm}
     extern main
 
     section .text
@@ -141,13 +144,13 @@ calls `main`:
         call main
         ; main has returned, eax is return value
         jmp  $    ; loop forever
-~~~
+```
 
 If this code is saved in a file called `start.s`, then the following code show
 an example of a linker script that places these instructions first in
 executable (remember that `start.s` gets compiled to `start.o`):
 
-~~~
+```
     OUTPUT_FORMAT("binary")    /* output flat binary */
 
     SECTIONS
@@ -170,7 +173,7 @@ executable (remember that `start.s` gets compiled to `start.o`):
             *(.rodata*)
         }
     }
-~~~
+```
 
 _Note_: `*(.text)` will not include the `.text` section of `start.o` again.
 
@@ -180,17 +183,17 @@ map for the kernel (`.rodata` will be mapped in as writeable, though).
 
 When we compile user programs we want the following GCC flags:
 
-~~~
+```
     -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles
     -nodefaultlibs
-~~~
+```
 
-For linking, the followings flags should be used:
+For linking, the following flags should be used:
 
-~~~
+```
     -T link.ld -melf_i386  # emulate 32 bits ELF, the binary output is specified
                            # in the linker script
-~~~
+```
 
 The option `-T` instructs the linker to use the linker script `link.ld`.
 
