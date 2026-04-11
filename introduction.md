@@ -97,6 +97,7 @@ have all contributed to this book:
 - [kedarmhaswade](https://github.com/kedarmhaswade)
 - [vamanea](https://github.com/vamanea)
 - [ansjob](https://github.com/ansjob)
+- [Muawiya Amir](https://github.com/Muawiya-contact)
 
 ## Changes and Corrections
 
