@@ -12,7 +12,7 @@ CITATION = citation_style.csl
 
 all: book.html
 
-book.html: $(CHAPTERS) $(CSS) $(HTML_TEMPLATE) $(BIB) $(CITATION)
+book.html book.epub: $(CHAPTERS) $(CSS) $(HTML_TEMPLATE) $(BIB) $(CITATION)
 	pandoc -s -S --toc -c $(CSS) --template $(HTML_TEMPLATE) \
 		   --bibliography $(BIB) --csl $(CITATION) --number-sections \
 		   $(CHAPTERS) -o $@
@@ -35,4 +35,4 @@ release: book.html book.pdf
 	cp book.css ../littleosbook.github.com/
 
 clean:
-	rm -f book.pdf book.html
+	rm -f book.pdf book.html book.epub
