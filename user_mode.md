@@ -1,7 +1,7 @@
 # User Mode
 
 User mode is now almost within our reach, there are just a few more steps
-required to get there. Although these steps might seem easy they way they
+required to get there. Although these steps might seem easy the way they
 are presented in this chapter, they can be tricky to implement, since there are
 a lot of places where small errors will cause bugs that are hard to find.
 
@@ -30,7 +30,7 @@ There are a few things every user mode process needs:
 
 - Page frames for code, data and stack. At the moment it suffices to allocate
   one page frame for the stack and enough page frames to fit the program's
-  code. Don't worry about setting up a stack that can be grow and shrink at
+  code. Don't worry about setting up a stack that can grow and shrink at
   this point in time, focus on getting a basic implementation work first.
 
 - The binary from the GRUB module has to be copied to the page frames used for
@@ -95,7 +95,7 @@ stack starts - `0xBFFFFFFB` (`0xC0000000 - 4`).
 
 The values `cs` and `ss` on the stack should be the segment selectors for the
 user code and user data segments, respectively. As we saw in the [segmentation
-chapter](#creating-and-loading-the-gdt), the lowest two bits of a segment
+chapter](#loading-the-gdt), the lowest two bits of a segment
 selector is the RPL - the Requested Privilege Level. When using `iret` to enter
 PL3, the RPL of `cs` and `ss` should be `0x3`. The following code shows an
 example:

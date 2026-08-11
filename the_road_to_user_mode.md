@@ -5,7 +5,7 @@ we do? Usually, a kernel is not supposed to do the application logic itself,
 but leave that for applications. The kernel creates the proper
 abstractions (for memory, files, devices) to make application development
 easier, performs tasks on behalf of applications (system calls) and
-[schedules processes](#scheduling).
+[schedules processes](#multitasking).
 
 User mode, in contrast with kernel mode, is the environment in which the user's
 programs execute. This environment is less privileged than the kernel, and will
